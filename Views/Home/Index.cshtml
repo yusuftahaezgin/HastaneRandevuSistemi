@@ -1,8 +1,96 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Ana Sayfa";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="intro-panel">
+    <div class="intro-text">
+        <span class="page-label">HASTANE RANDEVU SİSTEMİ</span>
+
+        <h1>Sağlık hizmetlerine<br />kolayca ulaşın.</h1>
+
+        <p>
+            Sağlık bölümlerini inceleyin, doktorlar hakkında bilgi alın
+            ve randevu işlemlerinizi tek bir yerden yönetin.
+        </p>
+
+        <a href="#bolumler" class="btn btn-primary">
+            Bölümleri görüntüle
+        </a>
+    </div>
+
+    <div class="appointment-box" id="randevu">
+        <h2>Randevu arama</h2>
+        <p>İşleminize uygun bölümü seçerek başlayın.</p>
+
+        <div class="form-group">
+            <label for="bolum">Sağlık bölümü</label>
+            <select id="bolum" class="form-select">
+                <option value="">Bölüm seçiniz</option>
+                <option>Dahiliye</option>
+                <option>Kardiyoloji</option>
+                <option>Çocuk Sağlığı</option>
+                <option>Dermatoloji</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="tarih">Tercih edilen tarih</label>
+            <input id="tarih" type="date" class="form-control" />
+        </div>
+
+        <a href="#bolumler" class="btn btn-primary appointment-button">
+            Bölümleri görüntüle
+        </a>
+    </div>
+</section>
+
+<section id="bolumler" class="departments-section">
+    <div class="section-title">
+        <div>
+            <span class="page-label">SAĞLIK BÖLÜMLERİ</span>
+            <h2>Bölümlerimiz</h2>
+        </div>
+
+        <span class="section-description">
+            İlgilendiğiniz bölümü seçin.
+        </span>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">01</span>
+                <h3>Dahiliye</h3>
+                <p>İç hastalıklarının değerlendirilmesi.</p>
+                <a href="#randevu">Bölümü incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">02</span>
+                <h3>Kardiyoloji</h3>
+                <p>Kalp ve dolaşım sistemi hastalıkları.</p>
+                <a href="#randevu">Bölümü incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">03</span>
+                <h3>Çocuk Sağlığı</h3>
+                <p>Çocukların sağlık ve gelişim takibi.</p>
+                <a href="#randevu">Bölümü incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">04</span>
+                <h3>Dermatoloji</h3>
+                <p>Cilt, saç ve tırnak sağlığı.</p>
+                <a href="#randevu">Bölümü incele →</a>
+            </div>
+        </div>
+    </div>
+</section>
