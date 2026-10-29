@@ -212,3 +212,85 @@ body {
         gap: 8px;
     }
 }
+
+/* Üst navigasyon menüsü */
+
+.app-navbar {
+    min-height: 72px;
+    padding: 10px 0;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-right: 30px;
+    color: #26364a;
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 7px;
+    background: #3568a8;
+    color: #fff;
+}
+
+.brand-mark svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+}
+
+.brand-highlight {
+    color: #3568a8;
+}
+
+.app-navbar .app-nav-link {
+    padding: 10px 13px;
+    color: #4b5563;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.app-navbar .app-nav-link:hover {
+    color: #3568a8;
+}
+
+.app-navbar .app-login-link {
+    margin-left: 10px;
+    padding: 10px 16px;
+    border: 1px solid #3568a8;
+    border-radius: 6px;
+    background: #3568a8;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.app-navbar .app-login-link:hover {
+    border-color: #285487;
+    background: #285487;
+    color: #fff;
+}
+
+@media (max-width: 991px) {
+    .app-navbar .navbar-nav {
+        align-items: stretch !important;
+        padding-top: 12px;
+    }
+
+    .app-navbar .app-login-link {
+        margin: 6px 0 0;
+    }
+}

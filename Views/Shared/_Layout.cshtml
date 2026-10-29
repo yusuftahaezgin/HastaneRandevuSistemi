@@ -11,23 +11,73 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">HastaneRandevuSistemi</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-lg app-navbar">
+            <div class="container">
+
+                <a class="navbar-brand app-brand"
+                asp-controller="Home"
+                asp-action="Index">
+
+                    <span class="brand-mark" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 32 32"
+                            width="24"
+                            height="24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round">
+
+                            <path d="M16 3v7M12.5 6.5h7" />
+                            <path d="M7 12h18v16H7z" />
+                            <path d="M11 16h2M19 16h2" />
+                            <path d="M11 20h2M19 20h2" />
+                            <path d="M14 28v-5h4v5" />
+                        </svg>
+                    </span>
+
+                    <span>Hastane <span class="brand-highlight">Randevu</span></span>
+                </a>
+
+                <button class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#mainNavbar"
+                        aria-controls="mainNavbar"
+                        aria-expanded="false"
+                        aria-label="Menüyü aç veya kapat">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav ms-auto align-items-lg-center">
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link app-nav-link"
+                            asp-controller="Home"
+                            asp-action="Index">
+                                Ana Sayfa
+                            </a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link app-nav-link"
+                            href="/#poliklinikler">
+                                Poliklinikler
+                            </a>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link app-login-link"
+                            href="/#randevu">
+                                Randevu Al
+                            </a>
+                        </li>
+
                     </ul>
                 </div>
+
             </div>
         </nav>
     </header>

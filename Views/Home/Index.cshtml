@@ -6,63 +6,85 @@
     <div class="intro-text">
         <span class="page-label">HASTANE RANDEVU SİSTEMİ</span>
 
-        <h1>Sağlık hizmetlerine<br />kolayca ulaşın.</h1>
+        <h1>
+            Sağlık hizmetlerine<br />
+            kolayca ulaşın.
+        </h1>
 
         <p>
-            Sağlık bölümlerini inceleyin, doktorlar hakkında bilgi alın
+            Polikliniklerimizi inceleyin, doktorlar hakkında bilgi alın
             ve randevu işlemlerinizi tek bir yerden yönetin.
         </p>
 
-        <a href="#bolumler" class="btn btn-primary">
-            Bölümleri görüntüle
+        <a href="#poliklinikler" class="btn btn-primary">
+            Poliklinikleri görüntüle
         </a>
     </div>
 
     <div class="appointment-box" id="randevu">
         <h2>Randevu arama</h2>
-        <p>İşleminize uygun bölümü seçerek başlayın.</p>
+
+        <p>
+            Randevu aramak için ilgili polikliniği seçerek başlayın.
+        </p>
 
         <div class="form-group">
-            <label for="bolum">Sağlık bölümü</label>
-            <select id="bolum" class="form-select">
-                <option value="">Bölüm seçiniz</option>
-                <option>Dahiliye</option>
-                <option>Kardiyoloji</option>
-                <option>Çocuk Sağlığı</option>
-                <option>Dermatoloji</option>
+            <label for="poliklinik">Poliklinik</label>
+
+            <select id="poliklinik" name="poliklinik"
+                    class="form-select">
+                <option value="">Poliklinik seçiniz</option>
+                <option value="dahiliye">Dahiliye</option>
+                <option value="kardiyoloji">Kardiyoloji</option>
+                <option value="cocuk-hastaliklari">Çocuk Hastalıkları</option>
+                <option value="dermatoloji">Dermatoloji</option>
+                <option value="ortopedi">Ortopedi ve Travmatoloji</option>
+                <option value="goz-hastaliklari">Göz Hastalıkları</option>
+                <option value="noroloji">Nöroloji</option>
+                <option value="kulak-burun-bogaz">Kulak Burun Boğaz</option>
+                <option value="kadin-hastaliklari">
+                    Kadın Hastalıkları ve Doğum
+                </option>
+                <option value="uroloji">Üroloji</option>
+                <option value="genel-cerrahi">Genel Cerrahi</option>
+                <option value="psikiyatri">Psikiyatri</option>
             </select>
         </div>
 
         <div class="form-group">
             <label for="tarih">Tercih edilen tarih</label>
-            <input id="tarih" type="date" class="form-control" />
+
+            <input id="tarih" name="tarih"
+                   type="date" class="form-control" />
         </div>
 
-        <a href="#bolumler" class="btn btn-primary appointment-button">
-            Bölümleri görüntüle
+        <a href="#poliklinikler"
+           class="btn btn-primary appointment-button">
+            Poliklinikleri görüntüle
         </a>
     </div>
 </section>
 
-<section id="bolumler" class="departments-section">
+<section id="poliklinikler" class="departments-section">
     <div class="section-title">
         <div>
-            <span class="page-label">SAĞLIK BÖLÜMLERİ</span>
-            <h2>Bölümlerimiz</h2>
+            <span class="page-label">POLİKLİNİKLER</span>
+            <h2>Polikliniklerimiz</h2>
         </div>
 
         <span class="section-description">
-            İlgilendiğiniz bölümü seçin.
+            İlgilendiğiniz polikliniği seçin.
         </span>
     </div>
 
     <div class="row g-3">
+
         <div class="col-md-6 col-xl-3">
             <div class="department-card">
                 <span class="department-code">01</span>
                 <h3>Dahiliye</h3>
                 <p>İç hastalıklarının değerlendirilmesi.</p>
-                <a href="#randevu">Bölümü incele →</a>
+                <a href="#randevu">Polikliniği incele →</a>
             </div>
         </div>
 
@@ -71,16 +93,16 @@
                 <span class="department-code">02</span>
                 <h3>Kardiyoloji</h3>
                 <p>Kalp ve dolaşım sistemi hastalıkları.</p>
-                <a href="#randevu">Bölümü incele →</a>
+                <a href="#randevu">Polikliniği incele →</a>
             </div>
         </div>
 
         <div class="col-md-6 col-xl-3">
             <div class="department-card">
                 <span class="department-code">03</span>
-                <h3>Çocuk Sağlığı</h3>
+                <h3>Çocuk Hastalıkları</h3>
                 <p>Çocukların sağlık ve gelişim takibi.</p>
-                <a href="#randevu">Bölümü incele →</a>
+                <a href="#randevu">Polikliniği incele →</a>
             </div>
         </div>
 
@@ -89,8 +111,81 @@
                 <span class="department-code">04</span>
                 <h3>Dermatoloji</h3>
                 <p>Cilt, saç ve tırnak sağlığı.</p>
-                <a href="#randevu">Bölümü incele →</a>
+                <a href="#randevu">Polikliniği incele →</a>
             </div>
         </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">05</span>
+                <h3>Ortopedi ve Travmatoloji</h3>
+                <p>Kemik, eklem ve kas-iskelet sistemi sağlığı.</p>
+                <a href="#randevu">Polikliniği incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">06</span>
+                <h3>Göz Hastalıkları</h3>
+                <p>Göz sağlığı ve görme değerlendirmeleri.</p>
+                <a href="#randevu">Polikliniği incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">07</span>
+                <h3>Nöroloji</h3>
+                <p>Beyin, sinir sistemi ve nörolojik hastalıklar.</p>
+                <a href="#randevu">Polikliniği incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">08</span>
+                <h3>Kulak Burun Boğaz</h3>
+                <p>Kulak, burun ve boğaz sağlığı.</p>
+                <a href="#randevu">Polikliniği incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">09</span>
+                <h3>Kadın Hastalıkları ve Doğum</h3>
+                <p>Kadın sağlığı ve gebelik takibi.</p>
+                <a href="#randevu">Polikliniği incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">10</span>
+                <h3>Üroloji</h3>
+                <p>İdrar yolları ve ilgili sağlık sorunları.</p>
+                <a href="#randevu">Polikliniği incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">11</span>
+                <h3>Genel Cerrahi</h3>
+                <p>Cerrahi değerlendirme ve tedavi süreçleri.</p>
+                <a href="#randevu">Polikliniği incele →</a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="department-card">
+                <span class="department-code">12</span>
+                <h3>Psikiyatri</h3>
+                <p>Ruh sağlığı değerlendirmeleri.</p>
+                <a href="#randevu">Polikliniği incele →</a>
+            </div>
+        </div>
+
     </div>
 </section>
