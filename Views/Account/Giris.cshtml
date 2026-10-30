@@ -1,0 +1,79 @@
+@model HastaneRandevuSistemi.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Giriş Yap";
+}
+
+<div class="account-page">
+    <div class="account-card">
+        <h1>Giriş Yap</h1>
+
+        <p class="account-description">
+            Randevu işlemlerine devam etmek için hesabınıza giriş yapın.
+        </p>
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3"></div>
+
+        <form asp-action="Giris" method="post">
+            @Html.AntiForgeryToken()
+
+            <input asp-for="ReturnUrl" type="hidden" />
+
+            <div class="mb-3">
+                <label asp-for="KullaniciAdiVeyaEposta"
+                       class="form-label">
+                    Kullanıcı adı veya e-posta
+                </label>
+
+                <input asp-for="KullaniciAdiVeyaEposta"
+                       class="form-control"
+                       autocomplete="username"
+                       placeholder="Kullanıcı adınızı girin" />
+
+                <span asp-validation-for="KullaniciAdiVeyaEposta"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">
+                    Parola
+                </label>
+
+                <input asp-for="Password"
+                       class="form-control"
+                       autocomplete="current-password"
+                       placeholder="Parolanızı girin" />
+
+                <span asp-validation-for="Password"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-4">
+                <input asp-for="BeniHatirla" class="form-check-input" />
+                <label asp-for="BeniHatirla" class="form-check-label">
+                    Beni hatırla
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary account-submit">
+                Giriş Yap
+            </button>
+        </form>
+
+        <div class="account-switch">
+            Hesabın yok mu?
+            <a asp-controller="Account"
+               asp-action="UyeOl"
+               asp-route-returnUrl="@Model.ReturnUrl">
+                Üye Ol
+            </a>
+        </div>
+
+        <a asp-controller="Home"
+           asp-action="Index"
+           class="account-back">
+            Ana sayfaya dön
+        </a>
+    </div>
+</div>

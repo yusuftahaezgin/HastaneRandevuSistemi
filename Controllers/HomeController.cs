@@ -1,14 +1,32 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+using HastaneRandevuSistemi.Data;
 using HastaneRandevuSistemi.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HastaneRandevuSistemi.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index()
+    private readonly ILogger<HomeController> _logger;
+    private readonly AppDbContext _context;
+
+    public HomeController(
+        ILogger<HomeController> logger,
+        AppDbContext context)
     {
-        return View();
+        _logger = logger;
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var poliklinikler = await _context.Poliklinikler
+            .Where(p => p.AktifMi)
+            .OrderBy(p => p.Id)
+            .ToListAsync();
+
+        return View(poliklinikler);
     }
 
     public IActionResult Privacy()
@@ -16,9 +34,16 @@ public class HomeController : Controller
         return View();
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [ResponseCache(
+        Duration = 0,
+        Location = ResponseCacheLocation.None,
+        NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        return View(new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id
+                        ?? HttpContext.TraceIdentifier
+        });
     }
 }

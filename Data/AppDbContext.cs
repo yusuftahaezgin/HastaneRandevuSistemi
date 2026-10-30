@@ -1,9 +1,11 @@
 using HastaneRandevuSistemi.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace HastaneRandevuSistemi.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -12,10 +14,38 @@ public class AppDbContext : DbContext
 
     public DbSet<Poliklinik> Poliklinikler => Set<Poliklinik>();
 
+    public DbSet<Doktor> Doktorlar => Set<Doktor>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
+        // Kullanıcı rolleri
+        modelBuilder.Entity<IdentityRole>().HasData(
+            new IdentityRole
+            {
+                Id = "11111111-1111-1111-1111-111111111111",
+                Name = "Hasta",
+                NormalizedName = "HASTA",
+                ConcurrencyStamp = "11111111-1111-1111-1111-111111111111"
+            },
+            new IdentityRole
+            {
+                Id = "22222222-2222-2222-2222-222222222222",
+                Name = "Doktor",
+                NormalizedName = "DOKTOR",
+                ConcurrencyStamp = "22222222-2222-2222-2222-222222222222"
+            },
+            new IdentityRole
+            {
+                Id = "33333333-3333-3333-3333-333333333333",
+                Name = "Yonetici",
+                NormalizedName = "YONETICI",
+                ConcurrencyStamp = "33333333-3333-3333-3333-333333333333"
+            }
+        );
+
+        // Poliklinik tablosu
         var poliklinik = modelBuilder.Entity<Poliklinik>();
 
         poliklinik.ToTable("Poliklinikler");
@@ -34,7 +64,7 @@ public class AppDbContext : DbContext
             {
                 Id = 1,
                 Ad = "Dahiliye",
-                Aciklama = "İç hastalıklarının değerlendirilmesi.",
+                Aciklama = "İç hastalıkları",
                 AktifMi = true
             },
             new Poliklinik
@@ -55,7 +85,7 @@ public class AppDbContext : DbContext
             {
                 Id = 4,
                 Ad = "Dermatoloji",
-                Aciklama = "Cilt, saç ve tırnak hastalıkları.",
+                Aciklama = "Cilt hastalıkları",
                 AktifMi = true
             },
             new Poliklinik
@@ -76,7 +106,7 @@ public class AppDbContext : DbContext
             {
                 Id = 7,
                 Ad = "Nöroloji",
-                Aciklama = "Sinir sistemi hastalıklarının değerlendirilmesi.",
+                Aciklama = "Sinir sistemi hastalıkları",
                 AktifMi = true
             },
             new Poliklinik
@@ -112,6 +142,141 @@ public class AppDbContext : DbContext
                 Id = 12,
                 Ad = "Psikiyatri",
                 Aciklama = "Ruh sağlığı değerlendirmeleri.",
+                AktifMi = true
+            }
+        );
+
+        // Doktor tablosu
+        var doktor = modelBuilder.Entity<Doktor>();
+
+        doktor.ToTable("Doktorlar");
+
+        doktor.HasKey(d => d.Id);
+
+        doktor.Property(d => d.Unvan)
+            .IsRequired()
+            .HasMaxLength(80);
+
+        doktor.Property(d => d.Ad)
+            .IsRequired()
+            .HasMaxLength(80);
+
+        doktor.Property(d => d.Soyad)
+            .IsRequired()
+            .HasMaxLength(80);
+
+        doktor.HasOne(d => d.Poliklinik)
+            .WithMany(p => p.Doktorlar)
+            .HasForeignKey(d => d.PoliklinikId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        doktor.HasData(
+            new Doktor
+            {
+                Id = 1,
+                Unvan = "Uzm. Dr.",
+                Ad = "Deniz",
+                Soyad = "Kaya",
+                PoliklinikId = 1,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 2,
+                Unvan = "Uzm. Dr.",
+                Ad = "Ece",
+                Soyad = "Yılmaz",
+                PoliklinikId = 2,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 3,
+                Unvan = "Uzm. Dr.",
+                Ad = "Mert",
+                Soyad = "Demir",
+                PoliklinikId = 3,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 4,
+                Unvan = "Uzm. Dr.",
+                Ad = "Selin",
+                Soyad = "Arslan",
+                PoliklinikId = 4,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 5,
+                Unvan = "Uzm. Dr.",
+                Ad = "Can",
+                Soyad = "Yıldız",
+                PoliklinikId = 5,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 6,
+                Unvan = "Uzm. Dr.",
+                Ad = "Elif",
+                Soyad = "Aydın",
+                PoliklinikId = 6,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 7,
+                Unvan = "Uzm. Dr.",
+                Ad = "Burak",
+                Soyad = "Şahin",
+                PoliklinikId = 7,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 8,
+                Unvan = "Uzm. Dr.",
+                Ad = "Derya",
+                Soyad = "Koç",
+                PoliklinikId = 8,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 9,
+                Unvan = "Uzm. Dr.",
+                Ad = "Zeynep",
+                Soyad = "Çelik",
+                PoliklinikId = 9,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 10,
+                Unvan = "Uzm. Dr.",
+                Ad = "Emre",
+                Soyad = "Kurt",
+                PoliklinikId = 10,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 11,
+                Unvan = "Uzm. Dr.",
+                Ad = "Ceren",
+                Soyad = "Özkan",
+                PoliklinikId = 11,
+                AktifMi = true
+            },
+            new Doktor
+            {
+                Id = 12,
+                Unvan = "Uzm. Dr.",
+                Ad = "Kerem",
+                Soyad = "Aslan",
+                PoliklinikId = 12,
                 AktifMi = true
             }
         );

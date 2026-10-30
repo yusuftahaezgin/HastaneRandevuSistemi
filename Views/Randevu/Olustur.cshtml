@@ -1,0 +1,131 @@
+@model HastaneRandevuSistemi.Models.RandevuSecimViewModel
+
+@{
+    ViewData["Title"] = "Randevu Al";
+}
+
+<section class="booking-page">
+    <div class="booking-header">
+        <span class="page-label">RANDEVU İŞLEMLERİ</span>
+        <h1>Randevu Al</h1>
+
+        <p>
+            Önce polikliniğinizi seçin, ardından o poliklinikteki doktorları inceleyin.
+        </p>
+    </div>
+
+    <div class="booking-panel">
+        <form asp-controller="Randevu"
+              asp-action="Olustur"
+              method="get">
+
+            <div class="mb-3">
+                <label for="poliklinikId" class="form-label">
+                    Poliklinik
+                </label>
+
+                <select id="poliklinikId"
+                        name="poliklinikId"
+                        class="form-select"
+                        required>
+
+                    <option value="">Poliklinik seçiniz</option>
+
+                    @foreach (var poliklinik in Model.Poliklinikler)
+                    {
+                        if (Model.SeciliPoliklinikId == poliklinik.Id)
+                        {
+                            <option value="@poliklinik.Id" selected>
+                                @poliklinik.Ad
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@poliklinik.Id">
+                                @poliklinik.Ad
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Doktorları Göster
+            </button>
+        </form>
+    </div>
+
+    @if (Model.SeciliPoliklinikId.HasValue)
+    {
+        <div class="booking-doctors">
+            <h2>Doktorlar</h2>
+
+            @if (Model.Doktorlar.Count == 0)
+            {
+                <p>
+                    Bu poliklinikte şu anda aktif doktor bulunmuyor.
+                </p>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var doktor in Model.Doktorlar)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <div class="doctor-card">
+                                <div class="doctor-card-top">
+                                    <span class="doctor-label">DOKTOR</span>
+
+                                    <span class="doctor-id">
+                                        No: @doktor.Id.ToString("D3")
+                                    </span>
+                                </div>
+
+                                <h3>
+                                    @doktor.Unvan
+                                    @doktor.Ad
+                                    @doktor.Soyad
+                                </h3>
+
+                                <p class="doctor-specialty">
+                                    @doktor.Poliklinik.Ad
+                                </p>
+
+                                <a asp-controller="Randevu"
+                                   asp-action="Olustur"
+                                   asp-route-poliklinikId="@Model.SeciliPoliklinikId"
+                                   asp-route-doktorId="@doktor.Id"
+                                   class="doctor-select-link">
+                                    Doktoru Seç →
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (Model.SeciliDoktor is not null)
+    {
+        <div class="booking-panel selected-doctor">
+            <span class="page-label">SEÇİLEN DOKTOR</span>
+
+            <h2>
+                @Model.SeciliDoktor.Unvan
+                @Model.SeciliDoktor.Ad
+                @Model.SeciliDoktor.Soyad
+            </h2>
+
+            <p>
+                @Model.SeciliDoktor.Poliklinik.Ad
+            </p>
+
+            <p class="text-muted mb-0">
+                Doktor seçiminiz kaydedilmeden önceki adımdır.
+                Bir sonraki geliştirmede bu ekrana doktorun müsait gün ve saatlerini
+                ve randevu oluşturma işlemini ekleyeceğiz.
+            </p>
+        </div>
+    }
+</section>

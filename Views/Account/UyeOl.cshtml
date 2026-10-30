@@ -1,0 +1,104 @@
+@model HastaneRandevuSistemi.Models.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Üye Ol";
+}
+
+<div class="account-page">
+    <div class="account-card">
+        <h1>Üye Ol</h1>
+
+        <p class="account-description">
+            Hasta hesabınızı oluşturarak randevu işlemlerine başlayın.
+        </p>
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3"></div>
+
+        <form asp-action="UyeOl" method="post">
+            @Html.AntiForgeryToken()
+
+            <input asp-for="ReturnUrl" type="hidden" />
+
+            <div class="mb-3">
+                <label asp-for="Ad" class="form-label">Ad</label>
+
+                <input asp-for="Ad"
+                       class="form-control"
+                       autocomplete="given-name" />
+
+                <span asp-validation-for="Ad"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Soyad" class="form-label">Soyad</label>
+
+                <input asp-for="Soyad"
+                       class="form-control"
+                       autocomplete="family-name" />
+
+                <span asp-validation-for="Soyad"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">
+                    E-posta adresi
+                </label>
+
+                <input asp-for="Email"
+                       class="form-control"
+                       autocomplete="email" />
+
+                <span asp-validation-for="Email"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">
+                    Parola
+                </label>
+
+                <input asp-for="Password"
+                       class="form-control"
+                       autocomplete="new-password" />
+
+                <span asp-validation-for="Password"
+                      class="text-danger"></span>
+
+                <small class="form-text text-muted">
+                    En az 8 karakter, büyük ve küçük harf, rakam ve özel karakter kullanın.
+                </small>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="ConfirmPassword" class="form-label">
+                    Parola tekrarı
+                </label>
+
+                <input asp-for="ConfirmPassword"
+                       class="form-control"
+                       autocomplete="new-password" />
+
+                <span asp-validation-for="ConfirmPassword"
+                      class="text-danger"></span>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary account-submit">
+                Hesap Oluştur
+            </button>
+        </form>
+
+        <div class="account-switch">
+            Zaten hesabın var mı?
+
+            <a asp-controller="Account"
+               asp-action="Giris"
+               asp-route-returnUrl="@Model.ReturnUrl">
+                Giriş Yap
+            </a>
+        </div>
+    </div>
+</div>

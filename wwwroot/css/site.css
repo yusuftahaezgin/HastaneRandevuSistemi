@@ -294,3 +294,323 @@ body {
         margin: 6px 0 0;
     }
 }
+
+/* Doktor listesi */
+
+.doctors-section {
+    padding: 20px 0 60px;
+}
+
+.doctor-card {
+    height: 100%;
+    padding: 22px;
+    background: #fff;
+    border: 1px solid #e1e7ef;
+    border-radius: 9px;
+    transition: border-color 0.2s ease;
+}
+
+.doctor-card:hover {
+    border-color: #8caed7;
+}
+
+.doctor-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.doctor-label {
+    color: #3568a8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+}
+
+.doctor-id {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.doctor-card h3 {
+    color: #26364a;
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.doctor-specialty {
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 22px;
+}
+
+.doctor-select-link {
+    color: #3568a8;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.doctor-select-link:hover {
+    color: #285487;
+}
+
+
+/* Karşılama kartı */
+
+.welcome-card {
+    height: 100%;
+    min-height: 330px;
+    padding: 30px;
+    background: #fff;
+    border: 1px solid #e1e7ef;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.welcome-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 24px;
+    border-radius: 8px;
+    background: #edf3fa;
+    color: #3568a8;
+}
+
+.welcome-label {
+    margin-bottom: 10px;
+    color: #3568a8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.welcome-card h2 {
+    margin-bottom: 14px;
+    color: #26364a;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.welcome-card > p {
+    margin-bottom: 24px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.welcome-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 17px;
+    border-top: 1px solid #e8edf3;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.welcome-footer-line {
+    width: 24px;
+    height: 2px;
+    background: #3568a8;
+}
+
+/* Hakkımızda alanı */
+
+.about-section {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.8fr) 1.5fr;
+    align-items: start;
+    gap: 40px;
+    padding: 34px 0 38px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.about-heading .page-label {
+    margin-bottom: 9px;
+}
+
+.about-heading h2 {
+    margin: 0;
+    color: #26364a;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.about-content p {
+    max-width: 700px;
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.9;
+}
+
+@media (max-width: 768px) {
+    .welcome-card {
+        min-height: auto;
+        padding: 24px;
+    }
+
+    .about-section {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 28px 0;
+    }
+
+    .about-heading h2 {
+        font-size: 21px;
+    }
+}
+
+/* Giriş ve üyelik ekranları */
+
+.account-page {
+    display: flex;
+    justify-content: center;
+    padding: 48px 12px 60px;
+}
+
+.account-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 32px;
+    background: #fff;
+    border: 1px solid #e1e7ef;
+    border-radius: 10px;
+}
+
+.account-card h1 {
+    color: #26364a;
+    font-size: 27px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.account-description {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 25px;
+}
+
+.account-card .form-label {
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.account-card .form-control {
+    min-height: 43px;
+    border-color: #d8e0e9;
+    border-radius: 6px;
+}
+
+.account-submit {
+    width: 100%;
+    min-height: 44px;
+    background: #3568a8;
+    border-color: #3568a8;
+}
+
+.account-switch {
+    margin-top: 23px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+    color: #64748b;
+    font-size: 14px;
+    text-align: center;
+}
+
+.account-switch a,
+.account-back {
+    color: #3568a8;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.account-back {
+    display: block;
+    margin-top: 18px;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* Randevu sayfası */
+
+.booking-page {
+    padding: 36px 0 60px;
+}
+
+.booking-header {
+    margin-bottom: 25px;
+}
+
+.booking-header h1 {
+    color: #26364a;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.booking-header p {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.booking-panel {
+    padding: 25px;
+    background: #f7f9fc;
+    border: 1px solid #e1e7ef;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.booking-panel .form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.booking-panel .form-select {
+    max-width: 560px;
+    min-height: 43px;
+    margin-bottom: 15px;
+}
+
+.booking-doctors {
+    margin-top: 32px;
+}
+
+.booking-doctors h2,
+.selected-doctor h2 {
+    color: #26364a;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.selected-doctor {
+    margin-top: 30px;
+}
+
+@media (max-width: 576px) {
+    .account-card {
+        padding: 24px;
+    }
+
+    .booking-panel {
+        padding: 20px;
+    }
+}

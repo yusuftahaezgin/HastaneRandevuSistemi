@@ -1,4 +1,6 @@
-﻿@{
+﻿@model List<HastaneRandevuSistemi.Models.Poliklinik>
+
+@{
     ViewData["Title"] = "Ana Sayfa";
 }
 
@@ -12,56 +14,49 @@
         </h1>
 
         <p>
-            Polikliniklerimizi inceleyin, doktorlar hakkında bilgi alın
-            ve randevu işlemlerinizi tek bir yerden yönetin.
+            İhtiyacınıza uygun polikliniği bulun ve sağlık
+            hizmetlerimiz hakkında bilgi alın.
         </p>
 
         <a href="#poliklinikler" class="btn btn-primary">
-            Poliklinikleri görüntüle
+            Poliklinikleri incele
         </a>
     </div>
 
-    <div class="appointment-box" id="randevu">
-        <h2>Randevu arama</h2>
+    <div class="welcome-card">
+        <div class="welcome-card-icon">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="30"
+                 height="30"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.6"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+                <path d="M3 21h18" />
+                <path d="M5 21V7l8-4v18" />
+                <path d="M19 21V11l-6-4" />
+                <path d="M9 9v.01M9 12v.01M9 15v.01" />
+                <path d="M16 14v.01M16 17v.01" />
+            </svg>
+        </div>
+
+        <span class="welcome-label">HOŞ GELDİNİZ</span>
+
+        <h2>Sağlığınız bizim için önemli.</h2>
 
         <p>
-            Randevu aramak için ilgili polikliniği seçerek başlayın.
+            Size uygun polikliniği seçerek başlayın.
+            Polikliniklerimizi inceleyebilir ve randevu
+            işlemlerinizi hesabınız üzerinden yapabilirsiniz.
         </p>
 
-        <div class="form-group">
-            <label for="poliklinik">Poliklinik</label>
-
-            <select id="poliklinik" name="poliklinik"
-                    class="form-select">
-                <option value="">Poliklinik seçiniz</option>
-                <option value="dahiliye">Dahiliye</option>
-                <option value="kardiyoloji">Kardiyoloji</option>
-                <option value="cocuk-hastaliklari">Çocuk Hastalıkları</option>
-                <option value="dermatoloji">Dermatoloji</option>
-                <option value="ortopedi">Ortopedi ve Travmatoloji</option>
-                <option value="goz-hastaliklari">Göz Hastalıkları</option>
-                <option value="noroloji">Nöroloji</option>
-                <option value="kulak-burun-bogaz">Kulak Burun Boğaz</option>
-                <option value="kadin-hastaliklari">
-                    Kadın Hastalıkları ve Doğum
-                </option>
-                <option value="uroloji">Üroloji</option>
-                <option value="genel-cerrahi">Genel Cerrahi</option>
-                <option value="psikiyatri">Psikiyatri</option>
-            </select>
+        <div class="welcome-footer">
+            <span class="welcome-footer-line"></span>
+            <span>Sağlıklı günler dileriz.</span>
         </div>
-
-        <div class="form-group">
-            <label for="tarih">Tercih edilen tarih</label>
-
-            <input id="tarih" name="tarih"
-                   type="date" class="form-control" />
-        </div>
-
-        <a href="#poliklinikler"
-           class="btn btn-primary appointment-button">
-            Poliklinikleri görüntüle
-        </a>
     </div>
 </section>
 
@@ -78,114 +73,25 @@
     </div>
 
     <div class="row g-3">
+        @foreach (var poliklinik in Model)
+        {
+            <div class="col-md-6 col-xl-3">
+                <div class="department-card">
+                    <span class="department-code">
+                        @poliklinik.Id.ToString("D2")
+                    </span>
 
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">01</span>
-                <h3>Dahiliye</h3>
-                <p>İç hastalıklarının değerlendirilmesi.</p>
-                <a href="#randevu">Polikliniği incele →</a>
+                    <h3>@poliklinik.Ad</h3>
+
+                    <p>@poliklinik.Aciklama</p>
+
+                    <a asp-controller="Randevu"
+                       asp-action="Olustur"
+                       asp-route-poliklinikId="@poliklinik.Id">
+                        Randevu Al →
+                    </a>
+                </div>
             </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">02</span>
-                <h3>Kardiyoloji</h3>
-                <p>Kalp ve dolaşım sistemi hastalıkları.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">03</span>
-                <h3>Çocuk Hastalıkları</h3>
-                <p>Çocukların sağlık ve gelişim takibi.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">04</span>
-                <h3>Dermatoloji</h3>
-                <p>Cilt, saç ve tırnak sağlığı.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">05</span>
-                <h3>Ortopedi ve Travmatoloji</h3>
-                <p>Kemik, eklem ve kas-iskelet sistemi sağlığı.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">06</span>
-                <h3>Göz Hastalıkları</h3>
-                <p>Göz sağlığı ve görme değerlendirmeleri.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">07</span>
-                <h3>Nöroloji</h3>
-                <p>Beyin, sinir sistemi ve nörolojik hastalıklar.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">08</span>
-                <h3>Kulak Burun Boğaz</h3>
-                <p>Kulak, burun ve boğaz sağlığı.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">09</span>
-                <h3>Kadın Hastalıkları ve Doğum</h3>
-                <p>Kadın sağlığı ve gebelik takibi.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">10</span>
-                <h3>Üroloji</h3>
-                <p>İdrar yolları ve ilgili sağlık sorunları.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">11</span>
-                <h3>Genel Cerrahi</h3>
-                <p>Cerrahi değerlendirme ve tedavi süreçleri.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="department-card">
-                <span class="department-code">12</span>
-                <h3>Psikiyatri</h3>
-                <p>Ruh sağlığı değerlendirmeleri.</p>
-                <a href="#randevu">Polikliniği incele →</a>
-            </div>
-        </div>
-
+        }
     </div>
 </section>

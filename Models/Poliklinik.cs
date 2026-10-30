@@ -9,4 +9,7 @@ public class Poliklinik
     public string Aciklama { get; set; } = string.Empty;
 
     public bool AktifMi { get; set; } = true;
+
+    public ICollection<Doktor> Doktorlar { get; set; }
+    = new List<Doktor>();
 }
