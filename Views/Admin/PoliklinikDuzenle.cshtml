@@ -1,0 +1,50 @@
+
+@model HastaneRandevuSistemi.Models.Poliklinik
+
+@{
+    ViewData["Title"] = "Poliklinik Düzenle";
+}
+
+<div class="container py-5">
+    <div class="mb-4">
+        <h2>Poliklinik Düzenle</h2>
+        <p class="text-muted">Poliklinik bilgilerini güncelleyebilirsiniz.</p>
+    </div>
+
+    <div class="card p-4" style="max-width: 650px;">
+        <form asp-controller="Admin" asp-action="PoliklinikDuzenle" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Ad" class="form-label">Poliklinik Adı</label>
+                <input asp-for="Ad" class="form-control" />
+                <span asp-validation-for="Ad" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Aciklama" class="form-label">Açıklama</label>
+                <textarea asp-for="Aciklama" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Aciklama" class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-4">
+                <input asp-for="AktifMi" class="form-check-input" />
+                <label asp-for="AktifMi" class="form-check-label">Aktif</label>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
+                <a asp-controller="Admin" asp-action="Poliklinikler"
+                   class="btn btn-outline-secondary">İptal</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
