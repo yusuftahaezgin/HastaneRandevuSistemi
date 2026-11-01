@@ -16,4 +16,9 @@ public class Doktor
 
     // Doktorun bağlı olduğu poliklinik
     public Poliklinik Poliklinik { get; set; } = null!;
+
+    // Doktorun sisteme giriş yapacağı kullanıcı hesabı.
+    public string? KullaniciId { get; set; }
+
+    public ApplicationUser? Kullanici { get; set; }
 }

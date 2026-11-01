@@ -112,6 +112,9 @@ namespace HastaneRandevuSistemi.Migrations
                     b.Property<bool>("AktifMi")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("KullaniciId")
+                        .HasColumnType("text");
+
                     b.Property<int>("PoliklinikId")
                         .HasColumnType("integer");
 
@@ -126,6 +129,9 @@ namespace HastaneRandevuSistemi.Migrations
                         .HasColumnType("character varying(80)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("KullaniciId")
+                        .IsUnique();
 
                     b.HasIndex("PoliklinikId");
 
@@ -511,11 +517,18 @@ namespace HastaneRandevuSistemi.Migrations
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Doktor", b =>
                 {
+                    b.HasOne("HastaneRandevuSistemi.Models.ApplicationUser", "Kullanici")
+                        .WithOne()
+                        .HasForeignKey("HastaneRandevuSistemi.Models.Doktor", "KullaniciId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("HastaneRandevuSistemi.Models.Poliklinik", "Poliklinik")
                         .WithMany("Doktorlar")
                         .HasForeignKey("PoliklinikId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Kullanici");
 
                     b.Navigation("Poliklinik");
                 });

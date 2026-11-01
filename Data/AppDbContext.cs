@@ -170,6 +170,12 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(d => d.PoliklinikId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Doktor ile giriş hesabı arasında bire bir ilişki
+        doktor.HasOne(d => d.Kullanici)
+            .WithOne()
+            .HasForeignKey<Doktor>(d => d.KullaniciId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         doktor.HasData(
             new Doktor
             {
