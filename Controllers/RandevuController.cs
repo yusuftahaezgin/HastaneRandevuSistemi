@@ -1,19 +1,18 @@
-using HastaneRandevuSistemi.Data;
-using HastaneRandevuSistemi.Models;
+using HastaneRandevuSistemi.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace HastaneRandevuSistemi.Controllers;
 
 [Authorize(Roles = "Hasta")]
 public class RandevuController : Controller
 {
-    private readonly AppDbContext _context;
+    private readonly IRandevuSecimService _randevuSecimService;
 
-    public RandevuController(AppDbContext context)
+    public RandevuController(
+        IRandevuSecimService randevuSecimService)
     {
-        _context = context;
+        _randevuSecimService = randevuSecimService;
     }
 
     [HttpGet]
@@ -21,45 +20,13 @@ public class RandevuController : Controller
         int? poliklinikId,
         int? doktorId)
     {
-        var model = new RandevuSecimViewModel
-        {
-            Poliklinikler = await _context.Poliklinikler
-                .Where(p => p.AktifMi)
-                .OrderBy(p => p.Id)
-                .ToListAsync()
-        };
+        var model = await _randevuSecimService.HazirlaAsync(
+            poliklinikId,
+            doktorId);
 
-        if (!poliklinikId.HasValue)
-        {
-            return View(model);
-        }
-
-        var poliklinik = model.Poliklinikler
-            .FirstOrDefault(p => p.Id == poliklinikId.Value);
-
-        if (poliklinik is null)
+        if (model is null)
         {
             return NotFound();
-        }
-
-        model.SeciliPoliklinikId = poliklinik.Id;
-
-        model.Doktorlar = await _context.Doktorlar
-            .Include(d => d.Poliklinik)
-            .Where(d =>
-                d.AktifMi
-                && d.Poliklinik.AktifMi
-                && d.PoliklinikId == poliklinik.Id)
-            .OrderBy(d => d.Ad)
-            .ThenBy(d => d.Soyad)
-            .ToListAsync();
-
-        if (doktorId.HasValue)
-        {
-            model.SeciliDoktor = model.Doktorlar
-                .FirstOrDefault(d => d.Id == doktorId.Value);
-
-            model.SeciliDoktorId = model.SeciliDoktor?.Id;
         }
 
         return View(model);

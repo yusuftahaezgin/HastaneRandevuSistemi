@@ -2,10 +2,15 @@ using HastaneRandevuSistemi.Data;
 using HastaneRandevuSistemi.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using HastaneRandevuSistemi.Services;
+using HastaneRandevuSistemi.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<
+    IRandevuSecimService,
+    RandevuSecimService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
