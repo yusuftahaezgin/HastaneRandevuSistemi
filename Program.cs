@@ -1,17 +1,24 @@
 using HastaneRandevuSistemi.Data;
 using HastaneRandevuSistemi.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using HastaneRandevuSistemi.Services;
 using HastaneRandevuSistemi.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+
+// Uygulama servisleri
 builder.Services.AddScoped<
     IRandevuSecimService,
     RandevuSecimService>();
 
+builder.Services.AddScoped<
+    IPoliklinikService,
+    PoliklinikService>();
+
+// PostgreSQL bağlantısı
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException(
@@ -20,6 +27,7 @@ var connectionString =
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+// Kullanıcı ve rol yönetimi
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.User.RequireUniqueEmail = true;

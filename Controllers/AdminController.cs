@@ -1,5 +1,6 @@
 using HastaneRandevuSistemi.Data;
 using HastaneRandevuSistemi.Models;
+using HastaneRandevuSistemi.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,13 +14,16 @@ public class AdminController : Controller
 {
     private readonly AppDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IPoliklinikService _poliklinikService;
 
     public AdminController(
         AppDbContext context,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IPoliklinikService poliklinikService)
     {
         _context = context;
         _userManager = userManager;
+        _poliklinikService = poliklinikService;
     }
 
     public IActionResult Index()
@@ -29,11 +33,10 @@ public class AdminController : Controller
 
     // ---------------- POLİKLİNİK İŞLEMLERİ ----------------
 
+    [HttpGet]
     public async Task<IActionResult> Poliklinikler()
     {
-        var poliklinikler = await _context.Poliklinikler
-            .OrderBy(p => p.Ad)
-            .ToListAsync();
+        var poliklinikler = await _poliklinikService.ListeleAsync();
 
         return View(poliklinikler);
     }
@@ -41,47 +44,31 @@ public class AdminController : Controller
     [HttpGet]
     public IActionResult PoliklinikEkle()
     {
-        return View();
+        return View(new PoliklinikFormViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PoliklinikEkle(
-        string ad, string aciklama)
+        PoliklinikFormViewModel model)
     {
-        ad = ad?.Trim() ?? "";
-        aciklama = aciklama?.Trim() ?? "";
-
-        if (string.IsNullOrWhiteSpace(ad))
+        if (!ModelState.IsValid)
         {
-            ModelState.AddModelError("ad", "Poliklinik adı boş olamaz.");
-            return View();
+            return View(model);
         }
 
-        if (ad.Length > 120 || aciklama.Length > 300)
+        try
         {
-            ModelState.AddModelError("", "Girilen bilgiler çok uzun.");
-            return View();
+            await _poliklinikService.EkleAsync(
+                model.Ad,
+                model.Aciklama,
+                model.AktifMi);
         }
-
-        bool mevcut = await _context.Poliklinikler
-            .AnyAsync(p => p.Ad.ToLower() == ad.ToLower());
-
-        if (mevcut)
+        catch (ArgumentException ex)
         {
-            ModelState.AddModelError("ad", "Bu poliklinik zaten mevcut.");
-            return View();
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(model);
         }
-
-        var poliklinik = new Poliklinik
-        {
-            Ad = ad,
-            Aciklama = aciklama,
-            AktifMi = true
-        };
-
-        _context.Poliklinikler.Add(poliklinik);
-        await _context.SaveChangesAsync();
 
         TempData["Basari"] = "Poliklinik başarıyla eklendi.";
 
@@ -91,55 +78,52 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> PoliklinikDuzenle(int id)
     {
-        var poliklinik = await _context.Poliklinikler
-            .FindAsync(id);
+        var poliklinik = await _poliklinikService.GetirAsync(id);
 
-        if (poliklinik == null)
+        if (poliklinik is null)
+        {
             return NotFound();
+        }
 
-        return View(poliklinik);
+        var model = new PoliklinikFormViewModel
+        {
+            Id = poliklinik.Id,
+            Ad = poliklinik.Ad,
+            Aciklama = poliklinik.Aciklama,
+            AktifMi = poliklinik.AktifMi
+        };
+
+        return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PoliklinikDuzenle(
-        int id, string ad, string aciklama)
+        PoliklinikFormViewModel model)
     {
-        ad = ad?.Trim() ?? "";
-        aciklama = aciklama?.Trim() ?? "";
-
-        var poliklinik = await _context.Poliklinikler
-            .FindAsync(id);
-
-        if (poliklinik == null)
-            return NotFound();
-
-        if (string.IsNullOrWhiteSpace(ad))
+        if (!ModelState.IsValid)
         {
-            ModelState.AddModelError("ad", "Poliklinik adı boş olamaz.");
-            return View(poliklinik);
+            return View(model);
         }
 
-        if (ad.Length > 120 || aciklama.Length > 300)
+        try
         {
-            ModelState.AddModelError("", "Girilen bilgiler çok uzun.");
-            return View(poliklinik);
+            bool bulundu = await _poliklinikService.GuncelleAsync(
+                model.Id,
+                model.Ad,
+                model.Aciklama,
+                model.AktifMi);
+
+            if (!bulundu)
+            {
+                return NotFound();
+            }
         }
-
-        bool mevcut = await _context.Poliklinikler
-            .AnyAsync(p => p.Id != id &&
-                           p.Ad.ToLower() == ad.ToLower());
-
-        if (mevcut)
+        catch (ArgumentException ex)
         {
-            ModelState.AddModelError("ad", "Bu poliklinik zaten mevcut.");
-            return View(poliklinik);
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(model);
         }
-
-        poliklinik.Ad = ad;
-        poliklinik.Aciklama = aciklama;
-
-        await _context.SaveChangesAsync();
 
         TempData["Basari"] = "Poliklinik başarıyla güncellendi.";
 
@@ -150,15 +134,12 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DurumDegistir(int id)
     {
-        var poliklinik = await _context.Poliklinikler
-            .FindAsync(id);
+        bool bulundu = await _poliklinikService.DurumDegistirAsync(id);
 
-        if (poliklinik == null)
+        if (!bulundu)
+        {
             return NotFound();
-
-        poliklinik.AktifMi = !poliklinik.AktifMi;
-
-        await _context.SaveChangesAsync();
+        }
 
         TempData["Basari"] = "Poliklinik durumu güncellendi.";
 
@@ -311,7 +292,9 @@ public class AdminController : Controller
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (doktor == null)
+        {
             return NotFound();
+        }
 
         var model = new DoktorDuzenleViewModel
         {
@@ -345,7 +328,9 @@ public class AdminController : Controller
             .FirstOrDefaultAsync(d => d.Id == model.Id);
 
         if (doktor == null)
+        {
             return NotFound();
+        }
 
         if (!ModelState.IsValid)
         {
@@ -429,7 +414,9 @@ public class AdminController : Controller
             .FindAsync(id);
 
         if (doktor == null)
+        {
             return NotFound();
+        }
 
         doktor.AktifMi = !doktor.AktifMi;
 

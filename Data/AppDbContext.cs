@@ -60,84 +60,84 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasMaxLength(300);
 
         poliklinik.HasData(
-            new Poliklinik
+            new 
             {
                 Id = 1,
                 Ad = "Dahiliye",
                 Aciklama = "İç hastalıkları",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 2,
                 Ad = "Kardiyoloji",
                 Aciklama = "Kalp ve dolaşım sistemi hastalıkları.",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 3,
                 Ad = "Çocuk Hastalıkları",
                 Aciklama = "Çocuk sağlığı ve hastalıklarının değerlendirilmesi.",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 4,
                 Ad = "Dermatoloji",
                 Aciklama = "Cilt hastalıkları",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 5,
                 Ad = "Ortopedi ve Travmatoloji",
                 Aciklama = "Kemik, eklem ve kas-iskelet sistemi sağlığı.",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 6,
                 Ad = "Göz Hastalıkları",
                 Aciklama = "Göz ve görme sağlığı.",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 7,
                 Ad = "Nöroloji",
                 Aciklama = "Sinir sistemi hastalıkları",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 8,
                 Ad = "Kulak Burun Boğaz",
                 Aciklama = "Kulak, burun ve boğaz hastalıkları.",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 9,
                 Ad = "Kadın Hastalıkları ve Doğum",
                 Aciklama = "Kadın sağlığı ve gebelik takibi.",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 10,
                 Ad = "Üroloji",
                 Aciklama = "İdrar yolları ve ilgili hastalıklar.",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 11,
                 Ad = "Genel Cerrahi",
                 Aciklama = "Cerrahi değerlendirme ve tedavi süreçleri.",
                 AktifMi = true
             },
-            new Poliklinik
+            new 
             {
                 Id = 12,
                 Ad = "Psikiyatri",
