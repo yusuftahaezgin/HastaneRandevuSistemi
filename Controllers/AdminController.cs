@@ -1,29 +1,23 @@
-using HastaneRandevuSistemi.Data;
 using HastaneRandevuSistemi.Models;
 using HastaneRandevuSistemi.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace HastaneRandevuSistemi.Controllers;
 
 [Authorize(Roles = "Yonetici")]
 public class AdminController : Controller
 {
-    private readonly AppDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IPoliklinikService _poliklinikService;
+    private readonly IDoktorService _doktorService;
 
     public AdminController(
-        AppDbContext context,
-        UserManager<ApplicationUser> userManager,
-        IPoliklinikService poliklinikService)
+        IPoliklinikService poliklinikService,
+        IDoktorService doktorService)
     {
-        _context = context;
-        _userManager = userManager;
         _poliklinikService = poliklinikService;
+        _doktorService = doktorService;
     }
 
     public IActionResult Index()
@@ -148,21 +142,14 @@ public class AdminController : Controller
 
     // ---------------- DOKTOR İŞLEMLERİ ----------------
 
-    // Doktor listesi
+    [HttpGet]
     public async Task<IActionResult> Doktorlar()
     {
-        var doktorlar = await _context.Doktorlar
-            .Include(d => d.Poliklinik)
-            .Include(d => d.Kullanici)
-            .OrderBy(d => d.Poliklinik.Ad)
-            .ThenBy(d => d.Ad)
-            .ThenBy(d => d.Soyad)
-            .ToListAsync();
+        var doktorlar = await _doktorService.ListeleAsync();
 
         return View(doktorlar);
     }
 
-    // Doktor ekleme sayfası
     [HttpGet]
     public async Task<IActionResult> DoktorEkle()
     {
@@ -171,111 +158,28 @@ public class AdminController : Controller
         return View(new DoktorEkleViewModel());
     }
 
-    // Doktor ve giriş hesabı oluşturma
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DoktorEkle(
         DoktorEkleViewModel model)
     {
-        model.Ad = model.Ad?.Trim() ?? "";
-        model.Soyad = model.Soyad?.Trim() ?? "";
-        model.Unvan = model.Unvan?.Trim() ?? "";
-        model.Email = model.Email?.Trim() ?? "";
-
         if (!ModelState.IsValid)
         {
-            await PoliklinikListesiniHazirla();
+            await PoliklinikListesiniHazirla(model.PoliklinikId);
             return View(model);
         }
 
-        var poliklinik = await _context.Poliklinikler
-            .FirstOrDefaultAsync(p =>
-                p.Id == model.PoliklinikId && p.AktifMi);
-
-        if (poliklinik == null)
+        try
         {
-            ModelState.AddModelError(
-                nameof(model.PoliklinikId),
-                "Geçerli ve aktif bir poliklinik seçmelisiniz.");
+            await _doktorService.EkleAsync(model);
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
 
-            await PoliklinikListesiniHazirla();
+            await PoliklinikListesiniHazirla(model.PoliklinikId);
             return View(model);
         }
-
-        var mevcutKullanici =
-            await _userManager.FindByEmailAsync(model.Email);
-
-        if (mevcutKullanici != null)
-        {
-            ModelState.AddModelError(
-                nameof(model.Email),
-                "Bu e-posta adresi zaten kayıtlı.");
-
-            await PoliklinikListesiniHazirla();
-            return View(model);
-        }
-
-        // Kullanıcı hesabı ve doktor kaydı aynı işlemde oluşturulur.
-        await using var transaction =
-            await _context.Database.BeginTransactionAsync();
-
-        var kullanici = new ApplicationUser
-        {
-            Ad = model.Ad,
-            Soyad = model.Soyad,
-            Email = model.Email,
-            UserName = model.Email,
-            EmailConfirmed = true
-        };
-
-        var kullaniciSonucu = await _userManager.CreateAsync(
-            kullanici,
-            model.Parola);
-
-        if (!kullaniciSonucu.Succeeded)
-        {
-            await transaction.RollbackAsync();
-
-            foreach (var error in kullaniciSonucu.Errors)
-            {
-                ModelState.AddModelError("", error.Description);
-            }
-
-            await PoliklinikListesiniHazirla();
-            return View(model);
-        }
-
-        var rolSonucu = await _userManager.AddToRoleAsync(
-            kullanici,
-            "Doktor");
-
-        if (!rolSonucu.Succeeded)
-        {
-            await transaction.RollbackAsync();
-
-            foreach (var error in rolSonucu.Errors)
-            {
-                ModelState.AddModelError("", error.Description);
-            }
-
-            await PoliklinikListesiniHazirla();
-            return View(model);
-        }
-
-        var doktor = new Doktor
-        {
-            Unvan = model.Unvan,
-            Ad = model.Ad,
-            Soyad = model.Soyad,
-            PoliklinikId = model.PoliklinikId,
-            AktifMi = true,
-            KullaniciId = kullanici.Id
-        };
-
-        _context.Doktorlar.Add(doktor);
-
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
 
         TempData["Basari"] =
             "Doktor ve giriş hesabı başarıyla oluşturuldu.";
@@ -283,15 +187,12 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Doktorlar));
     }
 
-    // Doktor düzenleme sayfası
     [HttpGet]
     public async Task<IActionResult> DoktorDuzenle(int id)
     {
-        var doktor = await _context.Doktorlar
-            .Include(d => d.Kullanici)
-            .FirstOrDefaultAsync(d => d.Id == id);
+        var doktor = await _doktorService.GetirAsync(id);
 
-        if (doktor == null)
+        if (doktor is null)
         {
             return NotFound();
         }
@@ -313,29 +214,23 @@ public class AdminController : Controller
         return View(model);
     }
 
-    // Doktor bilgilerini güncelleme
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DoktorDuzenle(
         DoktorDuzenleViewModel model)
     {
-        model.Ad = model.Ad?.Trim() ?? "";
-        model.Soyad = model.Soyad?.Trim() ?? "";
-        model.Unvan = model.Unvan?.Trim() ?? "";
+        var doktor = await _doktorService.GetirAsync(model.Id);
 
-        var doktor = await _context.Doktorlar
-            .Include(d => d.Kullanici)
-            .FirstOrDefaultAsync(d => d.Id == model.Id);
-
-        if (doktor == null)
+        if (doktor is null)
         {
             return NotFound();
         }
 
+        // Form tekrar gösterilirse hesap e-postası veritabanından alınır.
+        model.HesapEpostasi = doktor.Kullanici?.Email;
+
         if (!ModelState.IsValid)
         {
-            model.HesapEpostasi = doktor.Kullanici?.Email;
-
             await PoliklinikListesiniHazirla(
                 model.PoliklinikId,
                 pasifleriDahilEt: true);
@@ -343,103 +238,62 @@ public class AdminController : Controller
             return View(model);
         }
 
-        bool poliklinikMevcut = await _context.Poliklinikler
-            .AnyAsync(p => p.Id == model.PoliklinikId);
-
-        if (!poliklinikMevcut)
+        try
         {
-            ModelState.AddModelError(
-                nameof(model.PoliklinikId),
-                "Seçilen poliklinik bulunamadı.");
+            bool bulundu = await _doktorService.GuncelleAsync(model);
 
-            model.HesapEpostasi = doktor.Kullanici?.Email;
-
-            await PoliklinikListesiniHazirla(
-                model.PoliklinikId,
-                pasifleriDahilEt: true);
-
-            return View(model);
-        }
-
-        await using var transaction =
-            await _context.Database.BeginTransactionAsync();
-
-        // Doktorun giriş hesabı varsa ad ve soyad bilgilerini de güncelle.
-        if (doktor.Kullanici != null)
-        {
-            doktor.Kullanici.Ad = model.Ad;
-            doktor.Kullanici.Soyad = model.Soyad;
-
-            var kullaniciGuncellemeSonucu =
-                await _userManager.UpdateAsync(doktor.Kullanici);
-
-            if (!kullaniciGuncellemeSonucu.Succeeded)
+            if (!bulundu)
             {
-                await transaction.RollbackAsync();
-
-                foreach (var error in kullaniciGuncellemeSonucu.Errors)
-                {
-                    ModelState.AddModelError("", error.Description);
-                }
-
-                model.HesapEpostasi = doktor.Kullanici.Email;
-
-                await PoliklinikListesiniHazirla(
-                    model.PoliklinikId,
-                    pasifleriDahilEt: true);
-
-                return View(model);
+                return NotFound();
             }
         }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
 
-        doktor.Unvan = model.Unvan;
-        doktor.Ad = model.Ad;
-        doktor.Soyad = model.Soyad;
-        doktor.PoliklinikId = model.PoliklinikId;
+            await PoliklinikListesiniHazirla(
+                model.PoliklinikId,
+                pasifleriDahilEt: true);
 
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
+            return View(model);
+        }
 
         TempData["Basari"] = "Doktor bilgileri güncellendi.";
 
         return RedirectToAction(nameof(Doktorlar));
     }
 
-    // Doktoru aktif veya pasif yapma
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DoktorDurumDegistir(int id)
     {
-        var doktor = await _context.Doktorlar
-            .FindAsync(id);
+        bool bulundu = await _doktorService.DurumDegistirAsync(id);
 
-        if (doktor == null)
+        if (!bulundu)
         {
             return NotFound();
         }
-
-        doktor.AktifMi = !doktor.AktifMi;
-
-        await _context.SaveChangesAsync();
 
         TempData["Basari"] = "Doktor durumu güncellendi.";
 
         return RedirectToAction(nameof(Doktorlar));
     }
 
-    // Doktor formlarındaki poliklinik seçeneklerini hazırlar.
+    // Doktor formlarının poliklinik seçeneklerini hazırlar.
     private async Task PoliklinikListesiniHazirla(
         int? seciliId = null,
         bool pasifleriDahilEt = false)
     {
-        var sorgu = _context.Poliklinikler.AsQueryable();
+        var poliklinikler = await _poliklinikService.ListeleAsync();
+
+        IEnumerable<Poliklinik> secenekler = poliklinikler;
 
         if (!pasifleriDahilEt)
         {
-            sorgu = sorgu.Where(p => p.AktifMi);
+            secenekler = secenekler.Where(p => p.AktifMi);
         }
 
-        ViewBag.Poliklinikler = await sorgu
+        ViewBag.Poliklinikler = secenekler
             .OrderBy(p => p.Ad)
             .Select(p => new SelectListItem
             {
@@ -447,6 +301,6 @@ public class AdminController : Controller
                 Text = p.Ad + (p.AktifMi ? "" : " (Pasif)"),
                 Selected = p.Id == seciliId
             })
-            .ToListAsync();
+            .ToList();
     }
 }

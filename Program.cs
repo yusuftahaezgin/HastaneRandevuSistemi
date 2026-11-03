@@ -18,6 +18,10 @@ builder.Services.AddScoped<
     IPoliklinikService,
     PoliklinikService>();
 
+builder.Services.AddScoped<
+    IDoktorService,
+    DoktorService>();
+
 // PostgreSQL bağlantısı
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
