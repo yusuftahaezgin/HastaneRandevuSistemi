@@ -57,7 +57,7 @@
 
                             <td>
                                 <strong>
-                                    @doktor.Unvan @doktor.Ad @doktor.Soyad
+                                    @doktor.GorunenAdGetir()
                                 </strong>
                             </td>
 
@@ -79,11 +79,15 @@
                             <td>
                                 @if (doktor.AktifMi)
                                 {
-                                    <span class="badge bg-success">Aktif</span>
+                                    <span class="badge bg-success">
+                                        Aktif
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">Pasif</span>
+                                    <span class="badge bg-secondary">
+                                        Pasif
+                                    </span>
                                 }
                             </td>
 
@@ -92,7 +96,7 @@
                                     <a asp-controller="Admin"
                                        asp-action="DoktorDuzenle"
                                        asp-route-id="@doktor.Id"
-                                       class="btn btn-sm btn-outline-primary">
+                                       class="btn btn-outline-primary btn-sm">
                                         Düzenle
                                     </a>
 
@@ -106,14 +110,14 @@
                                         @if (doktor.AktifMi)
                                         {
                                             <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger">
+                                                    class="btn btn-outline-danger btn-sm">
                                                 Pasif Yap
                                             </button>
                                         }
                                         else
                                         {
                                             <button type="submit"
-                                                    class="btn btn-sm btn-outline-success">
+                                                    class="btn btn-outline-success btn-sm">
                                                 Aktif Yap
                                             </button>
                                         }

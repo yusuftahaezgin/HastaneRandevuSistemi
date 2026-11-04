@@ -14,13 +14,19 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Poliklinik> Poliklinikler => Set<Poliklinik>();
 
+    public DbSet<Calisan> Calisanlar => Set<Calisan>();
+
     public DbSet<Doktor> Doktorlar => Set<Doktor>();
+
+    public DbSet<SaglikPersoneli> SaglikPersonelleri
+        => Set<SaglikPersoneli>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Kullanıcı rolleri
+        // ---------------- KULLANICI ROLLERİ ----------------
+
         modelBuilder.Entity<IdentityRole>().HasData(
             new IdentityRole
             {
@@ -42,10 +48,18 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 Name = "Yonetici",
                 NormalizedName = "YONETICI",
                 ConcurrencyStamp = "33333333-3333-3333-3333-333333333333"
+            },
+            new IdentityRole
+            {
+                Id = "44444444-4444-4444-4444-444444444444",
+                Name = "SaglikPersoneli",
+                NormalizedName = "SAGLIKPERSONELI",
+                ConcurrencyStamp = "44444444-4444-4444-4444-444444444444"
             }
         );
 
-        // Poliklinik tablosu
+        // ---------------- POLİKLİNİK TABLOSU ----------------
+
         var poliklinik = modelBuilder.Entity<Poliklinik>();
 
         poliklinik.ToTable("Poliklinikler");
@@ -59,85 +73,86 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         poliklinik.Property(p => p.Aciklama)
             .HasMaxLength(300);
 
+        // Başlangıç verilerinin mevcut değerleri korunuyor.
         poliklinik.HasData(
-            new 
+            new
             {
                 Id = 1,
                 Ad = "Dahiliye",
                 Aciklama = "İç hastalıkları",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 2,
                 Ad = "Kardiyoloji",
                 Aciklama = "Kalp ve dolaşım sistemi hastalıkları.",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 3,
                 Ad = "Çocuk Hastalıkları",
                 Aciklama = "Çocuk sağlığı ve hastalıklarının değerlendirilmesi.",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 4,
                 Ad = "Dermatoloji",
                 Aciklama = "Cilt hastalıkları",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 5,
                 Ad = "Ortopedi ve Travmatoloji",
                 Aciklama = "Kemik, eklem ve kas-iskelet sistemi sağlığı.",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 6,
                 Ad = "Göz Hastalıkları",
                 Aciklama = "Göz ve görme sağlığı.",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 7,
                 Ad = "Nöroloji",
                 Aciklama = "Sinir sistemi hastalıkları",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 8,
                 Ad = "Kulak Burun Boğaz",
                 Aciklama = "Kulak, burun ve boğaz hastalıkları.",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 9,
                 Ad = "Kadın Hastalıkları ve Doğum",
                 Aciklama = "Kadın sağlığı ve gebelik takibi.",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 10,
                 Ad = "Üroloji",
                 Aciklama = "İdrar yolları ve ilgili hastalıklar.",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 11,
                 Ad = "Genel Cerrahi",
                 Aciklama = "Cerrahi değerlendirme ve tedavi süreçleri.",
                 AktifMi = true
             },
-            new 
+            new
             {
                 Id = 12,
                 Ad = "Psikiyatri",
@@ -146,35 +161,60 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             }
         );
 
-        // Doktor tablosu
+        // ---------------- ORTAK ÇALIŞAN TABLOSU ----------------
+
+        var calisan = modelBuilder.Entity<Calisan>();
+
+        calisan.ToTable("Calisanlar");
+
+        calisan.HasKey(c => c.Id);
+
+        calisan.Property(c => c.Ad)
+            .IsRequired()
+            .HasMaxLength(80);
+
+        calisan.Property(c => c.Soyad)
+            .IsRequired()
+            .HasMaxLength(80);
+
+        calisan.HasOne(c => c.Poliklinik)
+            .WithMany(p => p.Calisanlar)
+            .HasForeignKey(c => c.PoliklinikId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Her çalışan en fazla bir giriş hesabına bağlanır.
+        // Aynı giriş hesabı birden fazla çalışana bağlanamaz.
+        calisan.HasOne(c => c.Kullanici)
+            .WithOne()
+            .HasForeignKey<Calisan>(c => c.KullaniciId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Aynı tablodaki çalışan türlerini ayıran sütun.
+        calisan.HasDiscriminator<string>("CalisanTuru")
+            .HasValue<Doktor>("Doktor")
+            .HasValue<SaglikPersoneli>("SaglikPersoneli");
+
+        calisan.Property<string>("CalisanTuru")
+            .HasMaxLength(32)
+            .HasDefaultValue("Doktor");
+
+        // ---------------- DOKTORA ÖZGÜ ALANLAR ----------------
+
         var doktor = modelBuilder.Entity<Doktor>();
-
-        doktor.ToTable("Doktorlar");
-
-        doktor.HasKey(d => d.Id);
 
         doktor.Property(d => d.Unvan)
             .IsRequired()
             .HasMaxLength(80);
 
-        doktor.Property(d => d.Ad)
+        // ---------------- SAĞLIK PERSONELİNE ÖZGÜ ALANLAR ----------------
+
+        var saglikPersoneli = modelBuilder.Entity<SaglikPersoneli>();
+
+        saglikPersoneli.Property(s => s.Gorev)
             .IsRequired()
             .HasMaxLength(80);
 
-        doktor.Property(d => d.Soyad)
-            .IsRequired()
-            .HasMaxLength(80);
-
-        doktor.HasOne(d => d.Poliklinik)
-            .WithMany(p => p.Doktorlar)
-            .HasForeignKey(d => d.PoliklinikId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Doktor ile giriş hesabı arasında bire bir ilişki
-        doktor.HasOne(d => d.Kullanici)
-            .WithOne()
-            .HasForeignKey<Doktor>(d => d.KullaniciId)
-            .OnDelete(DeleteBehavior.SetNull);
+        // ---------------- BAŞLANGIÇ DOKTOR VERİLERİ ----------------
 
         doktor.HasData(
             new Doktor

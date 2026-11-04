@@ -96,7 +96,7 @@ namespace HastaneRandevuSistemi.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("HastaneRandevuSistemi.Models.Doktor", b =>
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.Calisan", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -112,6 +112,13 @@ namespace HastaneRandevuSistemi.Migrations
                     b.Property<bool>("AktifMi")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("CalisanTuru")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasDefaultValue("Doktor");
+
                     b.Property<string>("KullaniciId")
                         .HasColumnType("text");
 
@@ -123,11 +130,6 @@ namespace HastaneRandevuSistemi.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 
-                    b.Property<string>("Unvan")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("KullaniciId")
@@ -135,117 +137,11 @@ namespace HastaneRandevuSistemi.Migrations
 
                     b.HasIndex("PoliklinikId");
 
-                    b.ToTable("Doktorlar", (string)null);
+                    b.ToTable("Calisanlar", (string)null);
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Ad = "Deniz",
-                            AktifMi = true,
-                            PoliklinikId = 1,
-                            Soyad = "Kaya",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Ad = "Ece",
-                            AktifMi = true,
-                            PoliklinikId = 2,
-                            Soyad = "Yılmaz",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Ad = "Mert",
-                            AktifMi = true,
-                            PoliklinikId = 3,
-                            Soyad = "Demir",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Ad = "Selin",
-                            AktifMi = true,
-                            PoliklinikId = 4,
-                            Soyad = "Arslan",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Ad = "Can",
-                            AktifMi = true,
-                            PoliklinikId = 5,
-                            Soyad = "Yıldız",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Ad = "Elif",
-                            AktifMi = true,
-                            PoliklinikId = 6,
-                            Soyad = "Aydın",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Ad = "Burak",
-                            AktifMi = true,
-                            PoliklinikId = 7,
-                            Soyad = "Şahin",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Ad = "Derya",
-                            AktifMi = true,
-                            PoliklinikId = 8,
-                            Soyad = "Koç",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Ad = "Zeynep",
-                            AktifMi = true,
-                            PoliklinikId = 9,
-                            Soyad = "Çelik",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Ad = "Emre",
-                            AktifMi = true,
-                            PoliklinikId = 10,
-                            Soyad = "Kurt",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Ad = "Ceren",
-                            AktifMi = true,
-                            PoliklinikId = 11,
-                            Soyad = "Özkan",
-                            Unvan = "Uzm. Dr."
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Ad = "Kerem",
-                            AktifMi = true,
-                            PoliklinikId = 12,
-                            Soyad = "Aslan",
-                            Unvan = "Uzm. Dr."
-                        });
+                    b.HasDiscriminator<string>("CalisanTuru").HasValue("Calisan");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Poliklinik", b =>
@@ -406,6 +302,13 @@ namespace HastaneRandevuSistemi.Migrations
                             ConcurrencyStamp = "33333333-3333-3333-3333-333333333333",
                             Name = "Yonetici",
                             NormalizedName = "YONETICI"
+                        },
+                        new
+                        {
+                            Id = "44444444-4444-4444-4444-444444444444",
+                            ConcurrencyStamp = "44444444-4444-4444-4444-444444444444",
+                            Name = "SaglikPersoneli",
+                            NormalizedName = "SAGLIKPERSONELI"
                         });
                 });
 
@@ -517,13 +420,147 @@ namespace HastaneRandevuSistemi.Migrations
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Doktor", b =>
                 {
+                    b.HasBaseType("HastaneRandevuSistemi.Models.Calisan");
+
+                    b.Property<string>("Unvan")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.HasDiscriminator().HasValue("Doktor");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Ad = "Deniz",
+                            AktifMi = true,
+                            PoliklinikId = 1,
+                            Soyad = "Kaya",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Ad = "Ece",
+                            AktifMi = true,
+                            PoliklinikId = 2,
+                            Soyad = "Yılmaz",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Ad = "Mert",
+                            AktifMi = true,
+                            PoliklinikId = 3,
+                            Soyad = "Demir",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Ad = "Selin",
+                            AktifMi = true,
+                            PoliklinikId = 4,
+                            Soyad = "Arslan",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Ad = "Can",
+                            AktifMi = true,
+                            PoliklinikId = 5,
+                            Soyad = "Yıldız",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Ad = "Elif",
+                            AktifMi = true,
+                            PoliklinikId = 6,
+                            Soyad = "Aydın",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Ad = "Burak",
+                            AktifMi = true,
+                            PoliklinikId = 7,
+                            Soyad = "Şahin",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Ad = "Derya",
+                            AktifMi = true,
+                            PoliklinikId = 8,
+                            Soyad = "Koç",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Ad = "Zeynep",
+                            AktifMi = true,
+                            PoliklinikId = 9,
+                            Soyad = "Çelik",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Ad = "Emre",
+                            AktifMi = true,
+                            PoliklinikId = 10,
+                            Soyad = "Kurt",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Ad = "Ceren",
+                            AktifMi = true,
+                            PoliklinikId = 11,
+                            Soyad = "Özkan",
+                            Unvan = "Uzm. Dr."
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Ad = "Kerem",
+                            AktifMi = true,
+                            PoliklinikId = 12,
+                            Soyad = "Aslan",
+                            Unvan = "Uzm. Dr."
+                        });
+                });
+
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.SaglikPersoneli", b =>
+                {
+                    b.HasBaseType("HastaneRandevuSistemi.Models.Calisan");
+
+                    b.Property<string>("Gorev")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.HasDiscriminator().HasValue("SaglikPersoneli");
+                });
+
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.Calisan", b =>
+                {
                     b.HasOne("HastaneRandevuSistemi.Models.ApplicationUser", "Kullanici")
                         .WithOne()
-                        .HasForeignKey("HastaneRandevuSistemi.Models.Doktor", "KullaniciId")
+                        .HasForeignKey("HastaneRandevuSistemi.Models.Calisan", "KullaniciId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("HastaneRandevuSistemi.Models.Poliklinik", "Poliklinik")
-                        .WithMany("Doktorlar")
+                        .WithMany("Calisanlar")
                         .HasForeignKey("PoliklinikId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -586,7 +623,7 @@ namespace HastaneRandevuSistemi.Migrations
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Poliklinik", b =>
                 {
-                    b.Navigation("Doktorlar");
+                    b.Navigation("Calisanlar");
                 });
 #pragma warning restore 612, 618
         }

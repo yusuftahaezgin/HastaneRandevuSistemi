@@ -1,24 +1,11 @@
 namespace HastaneRandevuSistemi.Models;
 
-public class Doktor
+public class Doktor : Calisan
 {
-    public int Id { get; set; }
-
     public string Unvan { get; set; } = "Uzm. Dr.";
 
-    public string Ad { get; set; } = string.Empty;
-
-    public string Soyad { get; set; } = string.Empty;
-
-    public int PoliklinikId { get; set; }
-
-    public bool AktifMi { get; set; } = true;
-
-    // Doktorun bağlı olduğu poliklinik
-    public Poliklinik Poliklinik { get; set; } = null!;
-
-    // Doktorun sisteme giriş yapacağı kullanıcı hesabı.
-    public string? KullaniciId { get; set; }
-
-    public ApplicationUser? Kullanici { get; set; }
+    public override string GorunenAdGetir()
+    {
+        return $"{Unvan} {Ad} {Soyad}".Trim();
+    }
 }

@@ -10,10 +10,9 @@ public class Poliklinik
 
     public bool AktifMi { get; private set; } = true;
 
-    public ICollection<Doktor> Doktorlar { get; set; }
-        = new List<Doktor>();
+    public ICollection<Calisan> Calisanlar { get; set; }
+        = new List<Calisan>();
 
-    // Entity Framework için.
     private Poliklinik()
     {
     }
@@ -50,7 +49,6 @@ public class Poliklinik
                 "Açıklama en fazla 300 karakter olabilir.");
         }
 
-        // Tüm kontroller geçtikten sonra değerleri değiştir.
         Ad = temizAd;
         Aciklama = temizAciklama;
     }
