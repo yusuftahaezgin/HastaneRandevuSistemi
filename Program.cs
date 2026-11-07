@@ -9,20 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-// Uygulama servisleri
-builder.Services.AddScoped<
-    IRandevuSecimService,
-    RandevuSecimService>();
+builder.Services.AddScoped<IRandevuSecimService, RandevuSecimService>();
+builder.Services.AddScoped<IPoliklinikService, PoliklinikService>();
+builder.Services.AddScoped<IDoktorService, DoktorService>();
+builder.Services.AddScoped<ISaglikPersoneliService, SaglikPersoneliService>();
 
-builder.Services.AddScoped<
-    IPoliklinikService,
-    PoliklinikService>();
-
-builder.Services.AddScoped<
-    IDoktorService,
-    DoktorService>();
-
-// PostgreSQL bağlantısı
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException(
@@ -31,7 +22,6 @@ var connectionString =
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Kullanıcı ve rol yönetimi
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.User.RequireUniqueEmail = true;

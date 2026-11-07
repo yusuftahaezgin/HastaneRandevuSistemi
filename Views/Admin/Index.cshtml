@@ -1,4 +1,3 @@
-
 @{
     ViewData["Title"] = "Yönetici Paneli";
 }
@@ -12,10 +11,14 @@
     </div>
 
     <div class="row g-4">
-
-        <div class="col-md-6">
+        <div class="col-md-6 col-lg-4">
             <div class="card h-100 p-4">
-                <h4 class="mb-4">Poliklinik Yönetimi</h4>
+                <h4 class="mb-3">Poliklinik Yönetimi</h4>
+
+                <p class="text-muted">
+                    Poliklinik ekleyin, bilgilerini ve aktiflik durumunu düzenleyin.
+                </p>
+
                 <a asp-controller="Admin"
                    asp-action="Poliklinikler"
                    class="btn btn-primary mt-auto">
@@ -24,9 +27,14 @@
             </div>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-6 col-lg-4">
             <div class="card h-100 p-4">
-                <h4 class="mb-4">Doktor Yönetimi</h4>
+                <h4 class="mb-3">Doktor Yönetimi</h4>
+
+                <p class="text-muted">
+                    Doktorları, polikliniklerini ve giriş hesaplarını yönetin.
+                </p>
+
                 <a asp-controller="Admin"
                    asp-action="Doktorlar"
                    class="btn btn-primary mt-auto">
@@ -35,5 +43,20 @@
             </div>
         </div>
 
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 p-4">
+                <h4 class="mb-3">Sağlık Personeli Yönetimi</h4>
+
+                <p class="text-muted">
+                    Sağlık personelini, görevlerini ve polikliniklerini yönetin.
+                </p>
+
+                <a asp-controller="Admin"
+                   asp-action="SaglikPersonelleri"
+                   class="btn btn-primary mt-auto">
+                    Sağlık Personelini Yönet
+                </a>
+            </div>
+        </div>
     </div>
 </div>

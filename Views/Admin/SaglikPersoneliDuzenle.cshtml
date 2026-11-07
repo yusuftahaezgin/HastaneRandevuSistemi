@@ -1,0 +1,104 @@
+@model HastaneRandevuSistemi.Models.SaglikPersoneliDuzenleViewModel
+
+@{
+    ViewData["Title"] = "Sağlık Personeli Düzenle";
+}
+
+<div class="container py-5">
+    <div class="mb-4">
+        <h2>Sağlık Personeli Düzenle</h2>
+        <p class="text-muted">
+            Sağlık personelinin bilgilerini güncelleyebilirsiniz.
+        </p>
+    </div>
+
+    <div class="card p-4" style="max-width: 700px;">
+        <form asp-controller="Admin"
+              asp-action="SaglikPersoneliDuzenle"
+              asp-route-id="@Model.Id"
+              method="post"
+              asp-antiforgery="true">
+
+            <input asp-for="Id" type="hidden" />
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Gorev" class="form-label">
+                    Görev
+                </label>
+
+                <input asp-for="Gorev" class="form-control" />
+
+                <span asp-validation-for="Gorev"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Ad" class="form-label">
+                    Ad
+                </label>
+
+                <input asp-for="Ad" class="form-control" />
+
+                <span asp-validation-for="Ad"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Soyad" class="form-label">
+                    Soyad
+                </label>
+
+                <input asp-for="Soyad" class="form-control" />
+
+                <span asp-validation-for="Soyad"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PoliklinikId" class="form-label">
+                    Poliklinik
+                </label>
+
+                <select asp-for="PoliklinikId"
+                        asp-items="ViewBag.Poliklinikler"
+                        class="form-select">
+                    <option value="0">Poliklinik seçin</option>
+                </select>
+
+                <span asp-validation-for="PoliklinikId"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <label for="hesapEpostasi" class="form-label">
+                    Giriş E-postası
+                </label>
+
+                <input id="hesapEpostasi"
+                       type="text"
+                       value="@(Model.HesapEpostasi ?? "Giriş hesabı yok")"
+                       class="form-control"
+                       readonly />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Değişiklikleri Kaydet
+                </button>
+
+                <a asp-controller="Admin"
+                   asp-action="SaglikPersonelleri"
+                   class="btn btn-outline-secondary">
+                    İptal
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

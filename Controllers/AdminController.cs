@@ -11,21 +11,25 @@ public class AdminController : Controller
 {
     private readonly IPoliklinikService _poliklinikService;
     private readonly IDoktorService _doktorService;
+    private readonly ISaglikPersoneliService _personelService;
 
     public AdminController(
         IPoliklinikService poliklinikService,
-        IDoktorService doktorService)
+        IDoktorService doktorService,
+        ISaglikPersoneliService personelService)
     {
         _poliklinikService = poliklinikService;
         _doktorService = doktorService;
+        _personelService = personelService;
     }
 
+    [HttpGet]
     public IActionResult Index()
     {
         return View();
     }
 
-    // ---------------- POLİKLİNİK İŞLEMLERİ ----------------
+    // POLİKLİNİK İŞLEMLERİ
 
     [HttpGet]
     public async Task<IActionResult> Poliklinikler()
@@ -61,6 +65,7 @@ public class AdminController : Controller
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
+
             return View(model);
         }
 
@@ -102,13 +107,13 @@ public class AdminController : Controller
 
         try
         {
-            bool bulundu = await _poliklinikService.GuncelleAsync(
+            var guncellendi = await _poliklinikService.GuncelleAsync(
                 model.Id,
                 model.Ad,
                 model.Aciklama,
                 model.AktifMi);
 
-            if (!bulundu)
+            if (!guncellendi)
             {
                 return NotFound();
             }
@@ -116,6 +121,7 @@ public class AdminController : Controller
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
+
             return View(model);
         }
 
@@ -128,9 +134,9 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DurumDegistir(int id)
     {
-        bool bulundu = await _poliklinikService.DurumDegistirAsync(id);
+        var degisti = await _poliklinikService.DurumDegistirAsync(id);
 
-        if (!bulundu)
+        if (!degisti)
         {
             return NotFound();
         }
@@ -140,7 +146,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Poliklinikler));
     }
 
-    // ---------------- DOKTOR İŞLEMLERİ ----------------
+    // DOKTOR İŞLEMLERİ
 
     [HttpGet]
     public async Task<IActionResult> Doktorlar()
@@ -166,6 +172,7 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
         {
             await PoliklinikListesiniHazirla(model.PoliklinikId);
+
             return View(model);
         }
 
@@ -178,6 +185,7 @@ public class AdminController : Controller
             ModelState.AddModelError(string.Empty, ex.Message);
 
             await PoliklinikListesiniHazirla(model.PoliklinikId);
+
             return View(model);
         }
 
@@ -208,7 +216,7 @@ public class AdminController : Controller
         };
 
         await PoliklinikListesiniHazirla(
-            doktor.PoliklinikId,
+            model.PoliklinikId,
             pasifleriDahilEt: true);
 
         return View(model);
@@ -226,7 +234,6 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        // Form tekrar gösterilirse hesap e-postası veritabanından alınır.
         model.HesapEpostasi = doktor.Kullanici?.Email;
 
         if (!ModelState.IsValid)
@@ -240,9 +247,9 @@ public class AdminController : Controller
 
         try
         {
-            bool bulundu = await _doktorService.GuncelleAsync(model);
+            var guncellendi = await _doktorService.GuncelleAsync(model);
 
-            if (!bulundu)
+            if (!guncellendi)
             {
                 return NotFound();
             }
@@ -267,9 +274,9 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DoktorDurumDegistir(int id)
     {
-        bool bulundu = await _doktorService.DurumDegistirAsync(id);
+        var degisti = await _doktorService.DurumDegistirAsync(id);
 
-        if (!bulundu)
+        if (!degisti)
         {
             return NotFound();
         }
@@ -279,26 +286,171 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Doktorlar));
     }
 
-    // Doktor formlarının poliklinik seçeneklerini hazırlar.
+    // SAĞLIK PERSONELİ İŞLEMLERİ
+
+    [HttpGet]
+    public async Task<IActionResult> SaglikPersonelleri()
+    {
+        var personeller = await _personelService.ListeleAsync();
+
+        return View(personeller);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SaglikPersoneliEkle()
+    {
+        await PoliklinikListesiniHazirla();
+
+        return View(new SaglikPersoneliEkleViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaglikPersoneliEkle(
+        SaglikPersoneliEkleViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            await PoliklinikListesiniHazirla(model.PoliklinikId);
+
+            return View(model);
+        }
+
+        try
+        {
+            await _personelService.EkleAsync(model);
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+
+            await PoliklinikListesiniHazirla(model.PoliklinikId);
+
+            return View(model);
+        }
+
+        TempData["Basari"] =
+            "Sağlık personeli ve giriş hesabı başarıyla oluşturuldu.";
+
+        return RedirectToAction(nameof(SaglikPersonelleri));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SaglikPersoneliDuzenle(int id)
+    {
+        var personel = await _personelService.GetirAsync(id);
+
+        if (personel is null)
+        {
+            return NotFound();
+        }
+
+        var model = new SaglikPersoneliDuzenleViewModel
+        {
+            Id = personel.Id,
+            Gorev = personel.Gorev,
+            Ad = personel.Ad,
+            Soyad = personel.Soyad,
+            PoliklinikId = personel.PoliklinikId,
+            HesapEpostasi = personel.Kullanici?.Email
+        };
+
+        await PoliklinikListesiniHazirla(
+            model.PoliklinikId,
+            mevcutPoliklinikId: personel.PoliklinikId);
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaglikPersoneliDuzenle(
+        int id,
+        SaglikPersoneliDuzenleViewModel model)
+    {
+        if (id != model.Id)
+        {
+            return BadRequest();
+        }
+
+        var personel = await _personelService.GetirAsync(id);
+
+        if (personel is null)
+        {
+            return NotFound();
+        }
+
+        model.HesapEpostasi = personel.Kullanici?.Email;
+
+        if (!ModelState.IsValid)
+        {
+            await PoliklinikListesiniHazirla(
+                model.PoliklinikId,
+                mevcutPoliklinikId: personel.PoliklinikId);
+
+            return View(model);
+        }
+
+        try
+        {
+            var guncellendi = await _personelService.GuncelleAsync(model);
+
+            if (!guncellendi)
+            {
+                return NotFound();
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+
+            await PoliklinikListesiniHazirla(
+                model.PoliklinikId,
+                mevcutPoliklinikId: personel.PoliklinikId);
+
+            return View(model);
+        }
+
+        TempData["Basari"] = "Sağlık personeli başarıyla güncellendi.";
+
+        return RedirectToAction(nameof(SaglikPersonelleri));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaglikPersoneliDurumDegistir(int id)
+    {
+        var degisti = await _personelService.DurumDegistirAsync(id);
+
+        if (!degisti)
+        {
+            return NotFound();
+        }
+
+        TempData["Basari"] = "Personelin aktiflik durumu güncellendi.";
+
+        return RedirectToAction(nameof(SaglikPersonelleri));
+    }
+
+    // FORM SAYFALARI İÇİN POLİKLİNİK SEÇENEKLERİ
+
     private async Task PoliklinikListesiniHazirla(
         int? seciliId = null,
-        bool pasifleriDahilEt = false)
+        bool pasifleriDahilEt = false,
+        int? mevcutPoliklinikId = null)
     {
         var poliklinikler = await _poliklinikService.ListeleAsync();
 
-        IEnumerable<Poliklinik> secenekler = poliklinikler;
-
-        if (!pasifleriDahilEt)
-        {
-            secenekler = secenekler.Where(p => p.AktifMi);
-        }
-
-        ViewBag.Poliklinikler = secenekler
+        ViewBag.Poliklinikler = poliklinikler
+            .Where(p =>
+                pasifleriDahilEt ||
+                p.AktifMi ||
+                p.Id == mevcutPoliklinikId)
             .OrderBy(p => p.Ad)
             .Select(p => new SelectListItem
             {
                 Value = p.Id.ToString(),
-                Text = p.Ad + (p.AktifMi ? "" : " (Pasif)"),
+                Text = p.AktifMi ? p.Ad : $"{p.Ad} (Pasif)",
                 Selected = p.Id == seciliId
             })
             .ToList();
