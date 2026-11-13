@@ -144,6 +144,32 @@ namespace HastaneRandevuSistemi.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.Kurum", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Aciklama")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Ad")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<bool>("AktifMi")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Kurumlar", (string)null);
+                });
+
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Poliklinik", b =>
                 {
                     b.Property<int>("Id")
@@ -254,6 +280,42 @@ namespace HastaneRandevuSistemi.Migrations
                             Ad = "Psikiyatri",
                             AktifMi = true
                         });
+                });
+
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.Sube", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Ad")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Adres")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<bool>("AktifMi")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("KurumId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Telefon")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KurumId");
+
+                    b.ToTable("Subeler", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -570,6 +632,17 @@ namespace HastaneRandevuSistemi.Migrations
                     b.Navigation("Poliklinik");
                 });
 
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.Sube", b =>
+                {
+                    b.HasOne("HastaneRandevuSistemi.Models.Kurum", "Kurum")
+                        .WithMany("Subeler")
+                        .HasForeignKey("KurumId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Kurum");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -619,6 +692,11 @@ namespace HastaneRandevuSistemi.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.Kurum", b =>
+                {
+                    b.Navigation("Subeler");
                 });
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Poliklinik", b =>

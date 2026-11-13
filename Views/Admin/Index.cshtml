@@ -13,6 +13,38 @@
     <div class="row g-4">
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 p-4">
+                <h4 class="mb-3">Kurum Yönetimi</h4>
+
+                <p class="text-muted">
+                    Kurum kategorilerini ve aktiflik durumlarını yönetin.
+                </p>
+
+                <a asp-controller="Admin"
+                   asp-action="Kurumlar"
+                   class="btn btn-primary mt-auto">
+                    Kurumları Yönet
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 p-4">
+                <h4 class="mb-3">Şube Yönetimi</h4>
+
+                <p class="text-muted">
+                    Kurumlara bağlı hastaneleri, adreslerini ve iletişim bilgilerini yönetin.
+                </p>
+
+                <a asp-controller="Admin"
+                   asp-action="Subeler"
+                   class="btn btn-primary mt-auto">
+                    Şubeleri Yönet
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 p-4">
                 <h4 class="mb-3">Poliklinik Yönetimi</h4>
 
                 <p class="text-muted">

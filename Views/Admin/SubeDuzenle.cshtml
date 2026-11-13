@@ -1,0 +1,104 @@
+@model HastaneRandevuSistemi.Models.SubeFormViewModel
+
+@{
+    ViewData["Title"] = "Şube Düzenle";
+}
+
+<div class="container py-5">
+    <div class="mb-4">
+        <h2>Şube Düzenle</h2>
+        <p class="text-muted">
+            Şubenin bilgilerini ve aktiflik durumunu güncelleyin.
+        </p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card p-4">
+                <form asp-controller="Admin"
+                      asp-action="SubeDuzenle"
+                      asp-route-id="@Model.Id"
+                      method="post"
+                      asp-antiforgery="true">
+
+                    <input asp-for="Id" type="hidden" />
+                    <input asp-for="KurumId" type="hidden" />
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label for="kurumAdi" class="form-label">
+                            Bağlı Olduğu Kurum
+                        </label>
+
+                        <input id="kurumAdi"
+                               type="text"
+                               value="@ViewBag.KurumAdi"
+                               class="form-control"
+                               readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Ad" class="form-label"></label>
+
+                        <input asp-for="Ad"
+                               class="form-control"
+                               maxlength="150" />
+
+                        <span asp-validation-for="Ad"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Adres" class="form-label"></label>
+
+                        <textarea asp-for="Adres"
+                                  class="form-control"
+                                  rows="3"
+                                  maxlength="400"></textarea>
+
+                        <span asp-validation-for="Adres"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Telefon" class="form-label"></label>
+
+                        <input asp-for="Telefon"
+                               type="tel"
+                               class="form-control"
+                               maxlength="30" />
+
+                        <span asp-validation-for="Telefon"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input asp-for="AktifMi"
+                               class="form-check-input" />
+
+                        <label asp-for="AktifMi"
+                               class="form-check-label"></label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            Değişiklikleri Kaydet
+                        </button>
+
+                        <a asp-controller="Admin"
+                           asp-action="Subeler"
+                           class="btn btn-outline-secondary">
+                            İptal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

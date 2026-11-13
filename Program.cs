@@ -13,6 +13,8 @@ builder.Services.AddScoped<IRandevuSecimService, RandevuSecimService>();
 builder.Services.AddScoped<IPoliklinikService, PoliklinikService>();
 builder.Services.AddScoped<IDoktorService, DoktorService>();
 builder.Services.AddScoped<ISaglikPersoneliService, SaglikPersoneliService>();
+builder.Services.AddScoped<IKurumService, KurumService>();
+builder.Services.AddScoped<ISubeService, SubeService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")

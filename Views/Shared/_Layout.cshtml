@@ -1,4 +1,21 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var girisYapildi = User.Identity?.IsAuthenticated == true;
+    var yoneticiMi = girisYapildi && User.IsInRole("Yonetici");
+
+    var mevcutController =
+        ViewContext.RouteData.Values["controller"]?.ToString();
+
+    var mevcutAction =
+        ViewContext.RouteData.Values["action"]?.ToString();
+
+    var yonetimSayfasinda =
+        string.Equals(
+            mevcutController,
+            "Admin",
+            StringComparison.OrdinalIgnoreCase);
+}
+
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="utf-8" />
@@ -22,7 +39,6 @@
     <header>
         <nav class="navbar navbar-expand-lg app-navbar">
             <div class="container">
-
                 <a class="navbar-brand app-brand"
                    asp-controller="Home"
                    asp-action="Index">
@@ -45,7 +61,9 @@
                         </svg>
                     </span>
 
-                    <span>Hastane <span class="brand-highlight">Randevu</span></span>
+                    <span>
+                        Hastane <span class="brand-highlight">Randevu</span>
+                    </span>
                 </a>
 
                 <button class="navbar-toggler"
@@ -60,7 +78,6 @@
 
                 <div class="collapse navbar-collapse" id="mainNavbar">
                     <ul class="navbar-nav ms-auto align-items-lg-center">
-
                         <li class="nav-item">
                             <a class="nav-link app-nav-link"
                                asp-controller="Home"
@@ -69,25 +86,98 @@
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link app-nav-link"
-                               href="/#poliklinikler">
-                                Poliklinikler
-                            </a>
-                        </li>
+                        @if (yoneticiMi)
+                        {
+                            <li class="nav-item dropdown">
+                                <button class="nav-link app-nav-link dropdown-toggle border-0 bg-transparent @(yonetimSayfasinda ? "fw-bold" : "")"
+                                        id="yonetimMenu"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                    Yönetim Panelleri
+                                </button>
 
-                        @if (User.Identity?.IsAuthenticated == true)
+                                <ul class="dropdown-menu dropdown-menu-end"
+                                    aria-labelledby="yonetimMenu">
+                                    <li>
+                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction == "Index" ? "active" : "")"
+                                           asp-controller="Admin"
+                                           asp-action="Index">
+                                            Yönetici Paneli
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <hr class="dropdown-divider" />
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("Kurum") == true ? "active" : "")"
+                                           asp-controller="Admin"
+                                           asp-action="Kurumlar">
+                                            Kurum Yönetimi
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("Sube") == true ? "active" : "")"
+                                           asp-controller="Admin"
+                                           asp-action="Subeler">
+                                            Şube Yönetimi
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("Poliklinik") == true ? "active" : "")"
+                                           asp-controller="Admin"
+                                           asp-action="Poliklinikler">
+                                            Poliklinik Yönetimi
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("Doktor") == true ? "active" : "")"
+                                           asp-controller="Admin"
+                                           asp-action="Doktorlar">
+                                            Doktor Yönetimi
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("SaglikPersoneli") == true ? "active" : "")"
+                                           asp-controller="Admin"
+                                           asp-action="SaglikPersonelleri">
+                                            Sağlık Personeli Yönetimi
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link app-nav-link"
+                                   asp-controller="Home"
+                                   asp-action="Index"
+                                   asp-fragment="poliklinikler">
+                                    Poliklinikler
+                                </a>
+                            </li>
+                        }
+
+                        @if (girisYapildi)
                         {
                             <li class="nav-item">
                                 <span class="nav-link app-nav-link">
-                                    @User.Identity.Name
+                                    @User.Identity?.Name
                                 </span>
                             </li>
 
                             <li class="nav-item">
                                 <form asp-controller="Account"
                                       asp-action="Cikis"
-                                      method="post">
+                                      method="post"
+                                      asp-antiforgery="true">
                                     <button type="submit"
                                             class="nav-link app-nav-link border-0 bg-transparent">
                                         Çıkış Yap
@@ -106,17 +196,18 @@
                             </li>
                         }
 
-                        <li class="nav-item">
-                            <a class="nav-link app-login-link"
-                               asp-controller="Randevu"
-                               asp-action="Olustur">
-                                Randevu Al
-                            </a>
-                        </li>
-
+                        @if (!yoneticiMi)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link app-login-link"
+                                   asp-controller="Randevu"
+                                   asp-action="Olustur">
+                                    Randevu Al
+                                </a>
+                            </li>
+                        }
                     </ul>
                 </div>
-
             </div>
         </nav>
     </header>

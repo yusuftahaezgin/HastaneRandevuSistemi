@@ -12,6 +12,10 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
+    public DbSet<Kurum> Kurumlar => Set<Kurum>();
+
+    public DbSet<Sube> Subeler => Set<Sube>();
+
     public DbSet<Poliklinik> Poliklinikler => Set<Poliklinik>();
 
     public DbSet<Calisan> Calisanlar => Set<Calisan>();
@@ -25,7 +29,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(modelBuilder);
 
-        // ---------------- KULLANICI ROLLERİ ----------------
+        // KULLANICI ROLLERİ
 
         modelBuilder.Entity<IdentityRole>().HasData(
             new IdentityRole
@@ -58,7 +62,54 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             }
         );
 
-        // ---------------- POLİKLİNİK TABLOSU ----------------
+        // KURUM TABLOSU
+
+        var kurum = modelBuilder.Entity<Kurum>();
+
+        kurum.ToTable("Kurumlar");
+
+        kurum.HasKey(k => k.Id);
+
+        kurum.Property(k => k.Ad)
+            .IsRequired()
+            .HasMaxLength(150);
+
+        kurum.Property(k => k.Aciklama)
+            .IsRequired()
+            .HasMaxLength(300);
+
+        kurum.Property(k => k.AktifMi)
+            .IsRequired();
+
+        // ŞUBE TABLOSU
+
+        var sube = modelBuilder.Entity<Sube>();
+
+        sube.ToTable("Subeler");
+
+        sube.HasKey(s => s.Id);
+
+        sube.Property(s => s.Ad)
+            .IsRequired()
+            .HasMaxLength(150);
+
+        sube.Property(s => s.Adres)
+            .IsRequired()
+            .HasMaxLength(400);
+
+        sube.Property(s => s.Telefon)
+            .IsRequired()
+            .HasMaxLength(30);
+
+        sube.Property(s => s.AktifMi)
+            .IsRequired();
+
+        sube.HasOne(s => s.Kurum)
+            .WithMany(k => k.Subeler)
+            .HasForeignKey(s => s.KurumId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // POLİKLİNİK TABLOSU
 
         var poliklinik = modelBuilder.Entity<Poliklinik>();
 
@@ -73,7 +124,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         poliklinik.Property(p => p.Aciklama)
             .HasMaxLength(300);
 
-        // Başlangıç verilerinin mevcut değerleri korunuyor.
         poliklinik.HasData(
             new
             {
@@ -161,7 +211,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             }
         );
 
-        // ---------------- ORTAK ÇALIŞAN TABLOSU ----------------
+        // ORTAK ÇALIŞAN TABLOSU
 
         var calisan = modelBuilder.Entity<Calisan>();
 
@@ -182,14 +232,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(c => c.PoliklinikId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Her çalışan en fazla bir giriş hesabına bağlanır.
-        // Aynı giriş hesabı birden fazla çalışana bağlanamaz.
         calisan.HasOne(c => c.Kullanici)
             .WithOne()
             .HasForeignKey<Calisan>(c => c.KullaniciId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Aynı tablodaki çalışan türlerini ayıran sütun.
         calisan.HasDiscriminator<string>("CalisanTuru")
             .HasValue<Doktor>("Doktor")
             .HasValue<SaglikPersoneli>("SaglikPersoneli");
@@ -198,7 +245,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasMaxLength(32)
             .HasDefaultValue("Doktor");
 
-        // ---------------- DOKTORA ÖZGÜ ALANLAR ----------------
+        // DOKTORA ÖZGÜ ALANLAR
 
         var doktor = modelBuilder.Entity<Doktor>();
 
@@ -206,7 +253,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .IsRequired()
             .HasMaxLength(80);
 
-        // ---------------- SAĞLIK PERSONELİNE ÖZGÜ ALANLAR ----------------
+        // SAĞLIK PERSONELİNE ÖZGÜ ALANLAR
 
         var saglikPersoneli = modelBuilder.Entity<SaglikPersoneli>();
 
@@ -214,7 +261,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .IsRequired()
             .HasMaxLength(80);
 
-        // ---------------- BAŞLANGIÇ DOKTOR VERİLERİ ----------------
+        // BAŞLANGIÇ DOKTOR VERİLERİ
 
         doktor.HasData(
             new Doktor
