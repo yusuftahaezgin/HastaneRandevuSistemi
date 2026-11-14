@@ -19,4 +19,14 @@ public class RandevuSecimViewModel
     public int? SeciliDoktorId { get; set; }
 
     public Doktor? SeciliDoktor { get; set; }
+
+    public DateOnly Bugun { get; set; }
+
+    public DateOnly SonSecilebilirTarih { get; set; }
+
+    public DateOnly? SeciliTarih { get; set; }
+
+    public bool SeciliGundeCalismaVar { get; set; }
+
+    public List<RandevuSaatViewModel> Saatler { get; set; } = new();
 }

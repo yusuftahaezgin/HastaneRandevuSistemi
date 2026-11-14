@@ -8,5 +8,6 @@ public interface IRandevuSecimService
         int? kurumId = null,
         int? subeId = null,
         int? poliklinikId = null,
-        int? doktorId = null);
+        int? doktorId = null,
+        DateOnly? tarih = null);
 }

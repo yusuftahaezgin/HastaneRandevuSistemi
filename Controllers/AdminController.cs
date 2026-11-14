@@ -14,19 +14,22 @@ public class AdminController : Controller
     private readonly ISaglikPersoneliService _personelService;
     private readonly IKurumService _kurumService;
     private readonly ISubeService _subeService;
+    private readonly IDoktorCalismaSaatiService _calismaSaatiService;
 
     public AdminController(
         IPoliklinikService poliklinikService,
         IDoktorService doktorService,
         ISaglikPersoneliService personelService,
         IKurumService kurumService,
-        ISubeService subeService)
+        ISubeService subeService,
+        IDoktorCalismaSaatiService calismaSaatiService)
     {
         _poliklinikService = poliklinikService;
         _doktorService = doktorService;
         _personelService = personelService;
         _kurumService = kurumService;
         _subeService = subeService;
+        _calismaSaatiService = calismaSaatiService;
     }
 
     [HttpGet]
@@ -723,7 +726,176 @@ public class AdminController : Controller
         return RedirectToAction(nameof(SaglikPersonelleri));
     }
 
+    // DOKTOR ÇALIŞMA SAATLERİ
+
+    [HttpGet]
+    public async Task<IActionResult> CalismaSaatleri()
+    {
+        return View(await _calismaSaatiService.ListeleAsync());
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CalismaSaatiEkle()
+    {
+        await CalismaSaatiDoktorlariniHazirla();
+        CalismaGunleriniHazirla();
+        return View(new DoktorCalismaSaatiFormViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CalismaSaatiEkle(
+        DoktorCalismaSaatiFormViewModel model)
+    {
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                await _calismaSaatiService.EkleAsync(model);
+                TempData["Basari"] = "Çalışma saati başarıyla eklendi.";
+                return RedirectToAction(nameof(CalismaSaatleri));
+            }
+            catch (ArgumentException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+            }
+        }
+
+        await CalismaSaatiDoktorlariniHazirla(model.DoktorId);
+        CalismaGunleriniHazirla(model.Gun);
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CalismaSaatiDuzenle(int id)
+    {
+        var kayit = await _calismaSaatiService.GetirAsync(id);
+        if (kayit is null)
+        {
+            return NotFound();
+        }
+
+        var model = new DoktorCalismaSaatiFormViewModel
+        {
+            Id = kayit.Id,
+            DoktorId = kayit.DoktorId,
+            Gun = kayit.Gun,
+            BaslangicSaati = kayit.BaslangicSaati,
+            BitisSaati = kayit.BitisSaati,
+            RandevuSuresiDakika = kayit.RandevuSuresiDakika,
+            AktifMi = kayit.AktifMi
+        };
+
+        ViewBag.DoktorBilgisi = CalismaSaatiDoktorMetni(kayit.Doktor);
+        CalismaGunleriniHazirla(model.Gun);
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CalismaSaatiDuzenle(
+        int id,
+        DoktorCalismaSaatiFormViewModel model)
+    {
+        if (id != model.Id)
+        {
+            return BadRequest();
+        }
+
+        var kayit = await _calismaSaatiService.GetirAsync(id);
+        if (kayit is null)
+        {
+            return NotFound();
+        }
+
+        if (model.DoktorId != kayit.DoktorId)
+        {
+            return BadRequest();
+        }
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                var guncellendi = await _calismaSaatiService.GuncelleAsync(model);
+                if (!guncellendi)
+                {
+                    return NotFound();
+                }
+
+                TempData["Basari"] = "Çalışma saati başarıyla güncellendi.";
+                return RedirectToAction(nameof(CalismaSaatleri));
+            }
+            catch (ArgumentException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+            }
+        }
+
+        ViewBag.DoktorBilgisi = CalismaSaatiDoktorMetni(kayit.Doktor);
+        CalismaGunleriniHazirla(model.Gun);
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CalismaSaatiDurumDegistir(int id)
+    {
+        try
+        {
+            var degisti = await _calismaSaatiService.DurumDegistirAsync(id);
+            if (!degisti)
+            {
+                return NotFound();
+            }
+
+            TempData["Basari"] = "Çalışma saatinin aktiflik durumu güncellendi.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["Hata"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(CalismaSaatleri));
+    }
+
     // FORM SEÇENEKLERİ
+
+    private async Task CalismaSaatiDoktorlariniHazirla(int? seciliId = null)
+    {
+        var doktorlar = await _calismaSaatiService.SecilebilirDoktorlariListeleAsync();
+        ViewBag.Doktorlar = doktorlar.Select(d => new SelectListItem
+        {
+            Value = d.Id.ToString(),
+            Text = CalismaSaatiDoktorMetni(d),
+            Selected = d.Id == seciliId
+        }).ToList();
+        ViewBag.SecilebilirDoktorVar = doktorlar.Count > 0;
+    }
+
+    private void CalismaGunleriniHazirla(DayOfWeek? seciliGun = null)
+    {
+        var gunler = new[]
+        {
+            DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+            DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday,
+            DayOfWeek.Sunday
+        };
+        var kultur = System.Globalization.CultureInfo.GetCultureInfo("tr-TR");
+        ViewBag.Gunler = gunler.Select(g => new SelectListItem
+        {
+            Value = ((int)g).ToString(),
+            Text = kultur.DateTimeFormat.GetDayName(g),
+            Selected = g == seciliGun
+        }).ToList();
+    }
+
+    private static string CalismaSaatiDoktorMetni(Doktor doktor)
+    {
+        return $"{PoliklinikSecenekMetni(doktor.Poliklinik)} / " +
+               $"{doktor.GorunenAdGetir()} (ID: {doktor.Id})" +
+               (!doktor.AktifMi ? " (Doktor pasif)" : "");
+    }
 
     private async Task KurumListesiniHazirla(
         int? seciliId = null)

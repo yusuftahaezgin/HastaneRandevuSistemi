@@ -1,0 +1,37 @@
+@model DoktorCalismaSaatiFormViewModel
+@{
+    ViewData["Title"] = "Çalışma Saati Düzenle";
+}
+
+<div class="container py-5">
+    <h2>Çalışma Saati Düzenle</h2>
+    <p class="text-muted mb-4">Günü, saat aralığını, randevu süresini ve aktiflik durumunu güncelleyin.</p>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form asp-action="CalismaSaatiDuzenle" asp-route-id="@Model.Id"
+                  method="post" asp-antiforgery="true" class="card p-4" novalidate>
+                <input asp-for="Id" type="hidden" />
+                <input asp-for="DoktorId" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-4">
+                    <div class="form-label">Doktor</div>
+                    <div class="border rounded p-3 bg-light">@ViewBag.DoktorBilgisi</div>
+                    <div class="form-text">Bu çalışma programının doktoru değiştirilemez.</div>
+                </div>
+
+                <partial name="_CalismaSaatiAlanlari" model="Model" />
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
+                    <a asp-action="CalismaSaatleri" class="btn btn-outline-secondary">İptal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

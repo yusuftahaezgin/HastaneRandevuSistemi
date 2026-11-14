@@ -144,6 +144,50 @@ namespace HastaneRandevuSistemi.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.DoktorCalismaSaati", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AktifMi")
+                        .HasColumnType("boolean");
+
+                    b.Property<TimeOnly>("BaslangicSaati")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly>("BitisSaati")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("DoktorId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Gun")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RandevuSuresiDakika")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoktorId", "Gun");
+
+                    b.ToTable("DoktorCalismaSaatleri", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DoktorCalismaSaatleri_DakikaHassasiyeti", "EXTRACT(SECOND FROM \"BaslangicSaati\") = 0 AND EXTRACT(SECOND FROM \"BitisSaati\") = 0");
+
+                            t.HasCheckConstraint("CK_DoktorCalismaSaatleri_Gun", "\"Gun\" BETWEEN 0 AND 6");
+
+                            t.HasCheckConstraint("CK_DoktorCalismaSaatleri_MinimumAralik", "EXTRACT(EPOCH FROM (\"BitisSaati\" - \"BaslangicSaati\")) >= \"RandevuSuresiDakika\" * 60");
+
+                            t.HasCheckConstraint("CK_DoktorCalismaSaatleri_RandevuSuresi", "\"RandevuSuresiDakika\" BETWEEN 5 AND 120");
+
+                            t.HasCheckConstraint("CK_DoktorCalismaSaatleri_SaatAraligi", "\"BitisSaati\" > \"BaslangicSaati\"");
+                        });
+                });
+
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Kurum", b =>
                 {
                     b.Property<int>("Id")
@@ -647,6 +691,17 @@ namespace HastaneRandevuSistemi.Migrations
                     b.Navigation("Kullanici");
 
                     b.Navigation("Poliklinik");
+                });
+
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.DoktorCalismaSaati", b =>
+                {
+                    b.HasOne("HastaneRandevuSistemi.Models.Doktor", "Doktor")
+                        .WithMany()
+                        .HasForeignKey("DoktorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doktor");
                 });
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Poliklinik", b =>

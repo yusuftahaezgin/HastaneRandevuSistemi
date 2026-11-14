@@ -112,6 +112,13 @@
                                     </li>
 
                                     <li>
+                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("CalismaSaat") == true ? "active" : "")"
+                                           asp-controller="Admin" asp-action="CalismaSaatleri">
+                                            Doktor Çalışma Saatleri
+                                        </a>
+                                    </li>
+
+                                    <li>
                                         <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("Kurum") == true ? "active" : "")"
                                            asp-controller="Admin"
                                            asp-action="Kurumlar">

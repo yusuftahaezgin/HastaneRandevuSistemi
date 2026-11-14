@@ -15,6 +15,7 @@ builder.Services.AddScoped<IDoktorService, DoktorService>();
 builder.Services.AddScoped<ISaglikPersoneliService, SaglikPersoneliService>();
 builder.Services.AddScoped<IKurumService, KurumService>();
 builder.Services.AddScoped<ISubeService, SubeService>();
+builder.Services.AddScoped<IDoktorCalismaSaatiService, DoktorCalismaSaatiService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")

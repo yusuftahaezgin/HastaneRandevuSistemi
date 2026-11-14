@@ -1,0 +1,39 @@
+@model DoktorCalismaSaatiFormViewModel
+
+<div class="mb-3">
+    <label asp-for="Gun" class="form-label"></label>
+    <select asp-for="Gun" asp-items="ViewBag.Gunler" class="form-select">
+        <option value="">Gün seçin</option>
+    </select>
+    <span asp-validation-for="Gun" class="text-danger"></span>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="BaslangicSaati" class="form-label"></label>
+        <input asp-for="BaslangicSaati" type="time" asp-format="{0:HH:mm}"
+               step="60" class="form-control" />
+        <span asp-validation-for="BaslangicSaati" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="BitisSaati" class="form-label"></label>
+        <input asp-for="BitisSaati" type="time" asp-format="{0:HH:mm}"
+               step="60" class="form-control" />
+        <span asp-validation-for="BitisSaati" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="RandevuSuresiDakika" class="form-label"></label>
+    <input asp-for="RandevuSuresiDakika" type="number" min="5" max="120" step="1"
+           class="form-control" aria-describedby="sureAciklama" />
+    <span asp-validation-for="RandevuSuresiDakika" class="text-danger"></span>
+    <div id="sureAciklama" class="form-text">
+        5–120 dakika arasında olmalıdır. Çalışma aralığı en az bir randevuya yetmelidir.
+    </div>
+</div>
+
+<div class="form-check mb-4">
+    <input asp-for="AktifMi" class="form-check-input" />
+    <label asp-for="AktifMi" class="form-check-label"></label>
+</div>

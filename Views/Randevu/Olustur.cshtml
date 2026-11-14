@@ -1,8 +1,11 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
+@using System.Globalization
 @model HastaneRandevuSistemi.Models.RandevuSecimViewModel
 
 @{
     ViewData["Title"] = "Randevu Al";
+
+    var kultur = CultureInfo.GetCultureInfo("tr-TR");
 
     var seciliKurum = Model.Kurumlar
         .FirstOrDefault(k => k.Id == Model.SeciliKurumId);
@@ -20,7 +23,7 @@
         <h1>Randevu Al</h1>
 
         <p>
-            Kurum, hastane ve poliklinik seçerek doktorları inceleyin.
+            Kurum, hastane, poliklinik ve doktor seçerek çalışma saatlerini inceleyin.
         </p>
     </div>
 
@@ -243,6 +246,112 @@
                 <dt class="col-sm-3">Poliklinik</dt>
                 <dd class="col-sm-9">@seciliPoliklinik?.Ad</dd>
             </dl>
+
+            <hr class="my-4" />
+
+            <form asp-controller="Randevu"
+                  asp-action="Olustur"
+                  method="get"
+                  novalidate>
+
+                <input type="hidden"
+                       name="kurumId"
+                       value="@Model.SeciliKurumId" />
+
+                <input type="hidden"
+                       name="subeId"
+                       value="@Model.SeciliSubeId" />
+
+                <input type="hidden"
+                       name="poliklinikId"
+                       value="@Model.SeciliPoliklinikId" />
+
+                <input type="hidden"
+                       name="doktorId"
+                       value="@Model.SeciliDoktorId" />
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label for="tarih" class="form-label">
+                            Randevu Tarihi
+                        </label>
+
+                        <input id="tarih"
+                               name="tarih"
+                               type="date"
+                               class="form-control"
+                               value="@(Model.SeciliTarih?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))"
+                               min="@Model.Bugun.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"
+                               max="@Model.SonSecilebilirTarih.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"
+                               aria-describedby="tarihAciklama" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <button type="submit"
+                                class="btn btn-primary">
+                            Saatleri Göster
+                        </button>
+                    </div>
+                </div>
+
+                <p id="tarihAciklama"
+                   class="text-muted small mt-2">
+                    Bugün ile
+                    @Model.SonSecilebilirTarih.ToString("dd.MM.yyyy")
+                    arasında seçim yapabilirsiniz.
+                    Saatler Türkiye saatine göredir.
+                </p>
+            </form>
+
+            @if (Model.SeciliTarih.HasValue)
+            {
+                <h3 class="h5 mt-4">
+                    @Model.SeciliTarih.Value.ToString(
+                        "dd MMMM yyyy dddd",
+                        kultur)
+                </h3>
+
+                @if (!Model.SeciliGundeCalismaVar)
+                {
+                    <div class="alert alert-info mt-3">
+                        Doktorun seçilen gün için aktif çalışma programı
+                        bulunmuyor. Başka bir tarih seçebilirsiniz.
+                    </div>
+                }
+                else if (Model.Saatler.Count == 0)
+                {
+                    <div class="alert alert-info mt-3">
+                        Seçilen gün için ileri bir randevu saati kalmadı.
+                        Başka bir tarih seçebilirsiniz.
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">
+                        Çalışma programına göre
+                        @Model.Saatler.Count saat aralığı listeleniyor.
+                    </p>
+
+                    <div class="row g-2">
+                        @foreach (var saat in Model.Saatler)
+                        {
+                            <div class="col-6 col-md-4 col-xl-3">
+                                <div class="border rounded p-3 bg-white text-center h-100">
+                                    <strong class="text-nowrap">
+                                        @saat.BaslangicSaati.ToString("HH:mm")
+                                        –
+                                        @saat.BitisSaati.ToString("HH:mm")
+                                    </strong>
+
+                                    <div class="small text-muted">
+                                        @saat.RandevuSuresiDakika dakika
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
 
             <p class="text-muted mt-3 mb-0">
                 Henüz randevu oluşturulmadı.

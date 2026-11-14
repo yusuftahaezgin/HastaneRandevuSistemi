@@ -25,11 +25,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<SaglikPersoneli> SaglikPersonelleri
         => Set<SaglikPersoneli>();
 
+    public DbSet<DoktorCalismaSaati> DoktorCalismaSaatleri
+        => Set<DoktorCalismaSaati>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // KULLANICI ROLLERİ
+        // ---------------- KULLANICI ROLLERİ ----------------
 
         modelBuilder.Entity<IdentityRole>().HasData(
             new IdentityRole
@@ -37,36 +40,32 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 Id = "11111111-1111-1111-1111-111111111111",
                 Name = "Hasta",
                 NormalizedName = "HASTA",
-                ConcurrencyStamp =
-                    "11111111-1111-1111-1111-111111111111"
+                ConcurrencyStamp = "11111111-1111-1111-1111-111111111111"
             },
             new IdentityRole
             {
                 Id = "22222222-2222-2222-2222-222222222222",
                 Name = "Doktor",
                 NormalizedName = "DOKTOR",
-                ConcurrencyStamp =
-                    "22222222-2222-2222-2222-222222222222"
+                ConcurrencyStamp = "22222222-2222-2222-2222-222222222222"
             },
             new IdentityRole
             {
                 Id = "33333333-3333-3333-3333-333333333333",
                 Name = "Yonetici",
                 NormalizedName = "YONETICI",
-                ConcurrencyStamp =
-                    "33333333-3333-3333-3333-333333333333"
+                ConcurrencyStamp = "33333333-3333-3333-3333-333333333333"
             },
             new IdentityRole
             {
                 Id = "44444444-4444-4444-4444-444444444444",
                 Name = "SaglikPersoneli",
                 NormalizedName = "SAGLIKPERSONELI",
-                ConcurrencyStamp =
-                    "44444444-4444-4444-4444-444444444444"
+                ConcurrencyStamp = "44444444-4444-4444-4444-444444444444"
             }
         );
 
-        // KURUM TABLOSU
+        // ---------------- KURUMLAR ----------------
 
         var kurum = modelBuilder.Entity<Kurum>();
 
@@ -85,7 +84,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         kurum.Property(k => k.AktifMi)
             .IsRequired();
 
-        // ŞUBE TABLOSU
+        // ---------------- ŞUBELER ----------------
 
         var sube = modelBuilder.Entity<Sube>();
 
@@ -114,7 +113,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired();
 
-        // POLİKLİNİK TABLOSU
+        // ---------------- POLİKLİNİKLER ----------------
 
         var poliklinik = modelBuilder.Entity<Poliklinik>();
 
@@ -130,119 +129,112 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .IsRequired()
             .HasMaxLength(300);
 
-        // Hastane bağlantısı artık veritabanında zorunlu.
         poliklinik.HasOne(p => p.Sube)
             .WithMany()
             .HasForeignKey(p => p.SubeId)
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired();
 
-        // BAŞLANGIÇ POLİKLİNİK VERİLERİ
-        // SubeId = 2: Sakarya Eğitim ve Araştırma Hastanesi.
-
         poliklinik.HasData(
             new
             {
                 Id = 1,
-                SubeId = 2,
                 Ad = "Dahiliye",
                 Aciklama = "İç hastalıkları",
-                AktifMi = true
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 2,
-                SubeId = 2,
                 Ad = "Kardiyoloji",
                 Aciklama = "Kalp ve dolaşım sistemi hastalıkları.",
-                AktifMi = true
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 3,
-                SubeId = 2,
                 Ad = "Çocuk Hastalıkları",
-                Aciklama =
-                    "Çocuk sağlığı ve hastalıklarının değerlendirilmesi.",
-                AktifMi = true
+                Aciklama = "Çocuk sağlığı ve hastalıklarının değerlendirilmesi.",
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 4,
-                SubeId = 2,
                 Ad = "Dermatoloji",
                 Aciklama = "Cilt hastalıkları",
-                AktifMi = true
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 5,
-                SubeId = 2,
                 Ad = "Ortopedi ve Travmatoloji",
-                Aciklama =
-                    "Kemik, eklem ve kas-iskelet sistemi sağlığı.",
-                AktifMi = true
+                Aciklama = "Kemik, eklem ve kas-iskelet sistemi sağlığı.",
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 6,
-                SubeId = 2,
                 Ad = "Göz Hastalıkları",
                 Aciklama = "Göz ve görme sağlığı.",
-                AktifMi = true
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 7,
-                SubeId = 2,
                 Ad = "Nöroloji",
                 Aciklama = "Sinir sistemi hastalıkları",
-                AktifMi = true
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 8,
-                SubeId = 2,
                 Ad = "Kulak Burun Boğaz",
                 Aciklama = "Kulak, burun ve boğaz hastalıkları.",
-                AktifMi = true
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 9,
-                SubeId = 2,
                 Ad = "Kadın Hastalıkları ve Doğum",
                 Aciklama = "Kadın sağlığı ve gebelik takibi.",
-                AktifMi = true
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 10,
-                SubeId = 2,
                 Ad = "Üroloji",
                 Aciklama = "İdrar yolları ve ilgili hastalıklar.",
-                AktifMi = true
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 11,
-                SubeId = 2,
                 Ad = "Genel Cerrahi",
-                Aciklama =
-                    "Cerrahi değerlendirme ve tedavi süreçleri.",
-                AktifMi = true
+                Aciklama = "Cerrahi değerlendirme ve tedavi süreçleri.",
+                AktifMi = true,
+                SubeId = 2
             },
             new
             {
                 Id = 12,
-                SubeId = 2,
                 Ad = "Psikiyatri",
                 Aciklama = "Ruh sağlığı değerlendirmeleri.",
-                AktifMi = true
+                AktifMi = true,
+                SubeId = 2
             }
         );
 
-        // ORTAK ÇALIŞAN TABLOSU
+        // ---------------- ORTAK ÇALIŞAN TABLOSU ----------------
 
         var calisan = modelBuilder.Entity<Calisan>();
 
@@ -263,14 +255,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(c => c.PoliklinikId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Her çalışan en fazla bir giriş hesabına bağlanır.
-        // Aynı hesap birden fazla çalışana bağlanamaz.
         calisan.HasOne(c => c.Kullanici)
             .WithOne()
             .HasForeignKey<Calisan>(c => c.KullaniciId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Doktor ve sağlık personeli aynı tabloda tutulur.
         calisan.HasDiscriminator<string>("CalisanTuru")
             .HasValue<Doktor>("Doktor")
             .HasValue<SaglikPersoneli>("SaglikPersoneli");
@@ -279,7 +268,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasMaxLength(32)
             .HasDefaultValue("Doktor");
 
-        // DOKTORA ÖZGÜ ALANLAR
+        // ---------------- DOKTOR ----------------
 
         var doktor = modelBuilder.Entity<Doktor>();
 
@@ -287,7 +276,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .IsRequired()
             .HasMaxLength(80);
 
-        // SAĞLIK PERSONELİNE ÖZGÜ ALANLAR
+        // ---------------- SAĞLIK PERSONELİ ----------------
 
         var saglikPersoneli = modelBuilder.Entity<SaglikPersoneli>();
 
@@ -295,7 +284,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .IsRequired()
             .HasMaxLength(80);
 
-        // BAŞLANGIÇ DOKTOR VERİLERİ
+        // ---------------- BAŞLANGIÇ DOKTOR VERİLERİ ----------------
 
         doktor.HasData(
             new Doktor
@@ -407,5 +396,67 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 AktifMi = true
             }
         );
+
+        // ---------------- DOKTOR ÇALIŞMA SAATLERİ ----------------
+
+        var calismaSaati = modelBuilder.Entity<DoktorCalismaSaati>();
+
+        calismaSaati.ToTable("DoktorCalismaSaatleri", tablo =>
+        {
+            tablo.HasCheckConstraint(
+                "CK_DoktorCalismaSaatleri_Gun",
+                "\"Gun\" BETWEEN 0 AND 6");
+
+            tablo.HasCheckConstraint(
+                "CK_DoktorCalismaSaatleri_SaatAraligi",
+                "\"BitisSaati\" > \"BaslangicSaati\"");
+
+            tablo.HasCheckConstraint(
+                "CK_DoktorCalismaSaatleri_RandevuSuresi",
+                "\"RandevuSuresiDakika\" BETWEEN 5 AND 120");
+
+            tablo.HasCheckConstraint(
+                "CK_DoktorCalismaSaatleri_MinimumAralik",
+                "EXTRACT(EPOCH FROM " +
+                "(\"BitisSaati\" - \"BaslangicSaati\")) " +
+                ">= \"RandevuSuresiDakika\" * 60");
+
+            tablo.HasCheckConstraint(
+                "CK_DoktorCalismaSaatleri_DakikaHassasiyeti",
+                "EXTRACT(SECOND FROM \"BaslangicSaati\") = 0 " +
+                "AND EXTRACT(SECOND FROM \"BitisSaati\") = 0");
+        });
+
+        calismaSaati.HasKey(c => c.Id);
+
+        calismaSaati.Property(c => c.Gun)
+            .HasConversion<int>()
+            .IsRequired();
+
+        calismaSaati.Property(c => c.BaslangicSaati)
+            .HasColumnType("time without time zone")
+            .IsRequired();
+
+        calismaSaati.Property(c => c.BitisSaati)
+            .HasColumnType("time without time zone")
+            .IsRequired();
+
+        calismaSaati.Property(c => c.RandevuSuresiDakika)
+            .IsRequired();
+
+        calismaSaati.Property(c => c.AktifMi)
+            .IsRequired();
+
+        calismaSaati.HasOne(c => c.Doktor)
+            .WithMany()
+            .HasForeignKey(c => c.DoktorId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
+
+        calismaSaati.HasIndex(c => new
+        {
+            c.DoktorId,
+            c.Gun
+        });
     }
 }

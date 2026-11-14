@@ -1,0 +1,97 @@
+@model List<DoktorCalismaSaati>
+@using System.Globalization
+@{
+    ViewData["Title"] = "Doktor Çalışma Saatleri";
+    var kultur = CultureInfo.GetCultureInfo("tr-TR");
+}
+
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2>Doktor Çalışma Saatleri</h2>
+            <p class="text-muted mb-0">Haftalık çalışma aralıklarını ve randevu sürelerini yönetin.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">Yönetici Paneline Dön</a>
+            <a asp-action="CalismaSaatiEkle" class="btn btn-primary">+ Çalışma Saati Ekle</a>
+        </div>
+    </div>
+
+    @if (TempData["Basari"] is string basari)
+    {
+        <div class="alert alert-success" role="status">@basari</div>
+    }
+    @if (TempData["Hata"] is string hata)
+    {
+        <div class="alert alert-danger" role="alert">@hata</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">Henüz çalışma saati tanımlanmadı. Bir doktor seçerek ilk programı ekleyebilirsiniz.</div>
+    }
+    else
+    {
+        <div class="card p-3">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Doktor / Hastane</th>
+                            <th>Gün</th>
+                            <th>Saat Aralığı</th>
+                            <th>Randevu Süresi</th>
+                            <th>Program Durumu</th>
+                            <th class="text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kayit in Model)
+                        {
+                            var doktor = kayit.Doktor;
+                            var poliklinik = doktor.Poliklinik;
+                            var sube = poliklinik.Sube;
+                            var baglantilarAktif = doktor.AktifMi && poliklinik.AktifMi
+                                && sube?.AktifMi == true && sube.Kurum?.AktifMi == true;
+
+                            <tr>
+                                <td>
+                                    <strong>@doktor.GorunenAdGetir()</strong>
+                                    <span class="text-muted small">(ID: @doktor.Id)</span>
+                                    <div class="small text-muted">@sube?.Ad / @poliklinik.Ad</div>
+                                </td>
+                                <td>@kultur.DateTimeFormat.GetDayName(kayit.Gun)</td>
+                                <td class="text-nowrap">
+                                    @kayit.BaslangicSaati.ToString("HH:mm") – @kayit.BitisSaati.ToString("HH:mm")
+                                </td>
+                                <td>@kayit.RandevuSuresiDakika dakika</td>
+                                <td>
+                                    <span class="badge @(kayit.AktifMi ? "bg-success" : "bg-secondary")">
+                                        @(kayit.AktifMi ? "Aktif" : "Pasif")
+                                    </span>
+                                    @if (!baglantilarAktif)
+                                    {
+                                        <div class="small text-muted mt-1">
+                                            Doktor veya bağlı birimi pasif ya da eksik.
+                                        </div>
+                                    }
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <a asp-action="CalismaSaatiDuzenle" asp-route-id="@kayit.Id"
+                                       class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                    <form asp-action="CalismaSaatiDurumDegistir" asp-route-id="@kayit.Id"
+                                          method="post" asp-antiforgery="true" class="d-inline">
+                                        <button type="submit"
+                                                class="btn btn-sm @(kayit.AktifMi ? "btn-outline-danger" : "btn-outline-success")">
+                                            @(kayit.AktifMi ? "Pasif Yap" : "Aktif Yap")
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

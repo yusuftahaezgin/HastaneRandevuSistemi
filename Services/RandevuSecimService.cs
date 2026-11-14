@@ -9,6 +9,11 @@ public class RandevuSecimService : IRandevuSecimService
 {
     private readonly AppDbContext _context;
 
+    private const int IleriTarihSiniriGun = 30;
+
+    private static readonly TimeZoneInfo TurkiyeSaatDilimi =
+        TimeZoneInfo.FindSystemTimeZoneById("Europe/Istanbul");
+
     public RandevuSecimService(AppDbContext context)
     {
         _context = context;
@@ -18,13 +23,37 @@ public class RandevuSecimService : IRandevuSecimService
         int? kurumId = null,
         int? subeId = null,
         int? poliklinikId = null,
-        int? doktorId = null)
+        int? doktorId = null,
+        DateOnly? tarih = null)
     {
         // Seçim yapılmayan alanlarda 0 veya null kullanılabilir.
         kurumId = SecimiDuzenle(kurumId);
         subeId = SecimiDuzenle(subeId);
         poliklinikId = SecimiDuzenle(poliklinikId);
         doktorId = SecimiDuzenle(doktorId);
+
+        var simdi = TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.UtcNow,
+            TurkiyeSaatDilimi);
+
+        var bugun = DateOnly.FromDateTime(simdi);
+        var sonTarih = bugun.AddDays(IleriTarihSiniriGun);
+
+        if (tarih.HasValue)
+        {
+            if (!doktorId.HasValue)
+            {
+                throw new ArgumentException(
+                    "Tarih seçmeden önce bir doktor seçmelisiniz.");
+            }
+
+            if (tarih.Value < bugun || tarih.Value > sonTarih)
+            {
+                throw new ArgumentException(
+                    "Bugünden itibaren en fazla 30 gün sonrası için " +
+                    "tarih seçebilirsiniz.");
+            }
+        }
 
         // Ana sayfadan yalnızca poliklinikId ile gelinmesini destekler.
         if (poliklinikId.HasValue)
@@ -33,7 +62,8 @@ public class RandevuSecimService : IRandevuSecimService
                 .AsNoTracking()
                 .Include(p => p.Sube)
                     .ThenInclude(s => s!.Kurum)
-                .FirstOrDefaultAsync(p => p.Id == poliklinikId.Value);
+                .FirstOrDefaultAsync(
+                    p => p.Id == poliklinikId.Value);
 
             if (poliklinik is null
                 || !poliklinik.AktifMi
@@ -47,7 +77,8 @@ public class RandevuSecimService : IRandevuSecimService
                     "randevu seçimine uygun değil. Lütfen yeniden seçim yapın.");
             }
 
-            if (subeId.HasValue && subeId.Value != poliklinik.Sube.Id)
+            if (subeId.HasValue
+                && subeId.Value != poliklinik.Sube.Id)
             {
                 throw new ArgumentException(
                     "Seçilen poliklinik bu hastaneye bağlı değil.");
@@ -98,6 +129,9 @@ public class RandevuSecimService : IRandevuSecimService
 
         var model = new RandevuSecimViewModel
         {
+            Bugun = bugun,
+            SonSecilebilirTarih = sonTarih,
+
             Kurumlar = await _context.Kurumlar
                 .AsNoTracking()
                 .Where(k => k.AktifMi)
@@ -157,7 +191,8 @@ public class RandevuSecimService : IRandevuSecimService
             return model;
         }
 
-        if (!model.Poliklinikler.Any(p => p.Id == poliklinikId.Value))
+        if (!model.Poliklinikler.Any(
+                p => p.Id == poliklinikId.Value))
         {
             throw new ArgumentException(
                 "Seçilen poliklinik bu hastanede bulunamadı veya pasif durumda.");
@@ -197,7 +232,67 @@ public class RandevuSecimService : IRandevuSecimService
         model.SeciliDoktorId = doktor.Id;
         model.SeciliDoktor = doktor;
 
+        // Doktor ilk seçildiğinde bugünün programı gösterilir.
+        model.SeciliTarih = tarih ?? bugun;
+
+        await SaatleriHazirlaAsync(model, simdi);
+
         return model;
+    }
+
+    private async Task SaatleriHazirlaAsync(
+        RandevuSecimViewModel model,
+        DateTime simdi)
+    {
+        var tarih = model.SeciliTarih!.Value;
+        var doktorId = model.SeciliDoktorId!.Value;
+        var gun = tarih.DayOfWeek;
+
+        var programlar = await _context.DoktorCalismaSaatleri
+            .AsNoTracking()
+            .Where(c =>
+                c.DoktorId == doktorId
+                && c.Gun == gun
+                && c.AktifMi)
+            .OrderBy(c => c.BaslangicSaati)
+            .ToListAsync();
+
+        model.SeciliGundeCalismaVar = programlar.Count > 0;
+
+        var suAnkiSaat = TimeOnly.FromDateTime(simdi);
+
+        foreach (var program in programlar)
+        {
+            var baslangic = program.BaslangicSaati.ToTimeSpan();
+            var bitis = program.BitisSaati.ToTimeSpan();
+
+            var sure = TimeSpan.FromMinutes(
+                program.RandevuSuresiDakika);
+
+            // Yalnızca tamamı çalışma aralığına sığan randevuları üretiriz.
+            // TimeSpan hesabı gece yarısında saatin başa dönmesini önler.
+            for (
+                var saat = baslangic;
+                saat + sure <= bitis;
+                saat += sure)
+            {
+                var baslangicSaati = TimeOnly.FromTimeSpan(saat);
+
+                // Bugün için başlamış veya geçmiş saatler gösterilmez.
+                if (tarih == model.Bugun
+                    && baslangicSaati <= suAnkiSaat)
+                {
+                    continue;
+                }
+
+                model.Saatler.Add(new RandevuSaatViewModel
+                {
+                    BaslangicSaati = baslangicSaati,
+                    BitisSaati = TimeOnly.FromTimeSpan(saat + sure),
+                    RandevuSuresiDakika = program.RandevuSuresiDakika
+                });
+            }
+        }
     }
 
     private static int? SecimiDuzenle(int? id)
