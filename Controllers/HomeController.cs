@@ -22,8 +22,18 @@ public class HomeController : Controller
     public async Task<IActionResult> Index()
     {
         var poliklinikler = await _context.Poliklinikler
-            .Where(p => p.AktifMi)
-            .OrderBy(p => p.Id)
+            .AsNoTracking()
+            .Include(p => p.Sube)
+                .ThenInclude(s => s!.Kurum)
+            .Where(p =>
+                p.AktifMi
+                && p.Sube != null
+                && p.Sube.AktifMi
+                && p.Sube.Kurum != null
+                && p.Sube.Kurum.AktifMi)
+            .OrderBy(p => p.Sube!.Kurum.Ad)
+            .ThenBy(p => p.Sube!.Ad)
+            .ThenBy(p => p.Ad)
             .ToListAsync();
 
         return View(poliklinikler);

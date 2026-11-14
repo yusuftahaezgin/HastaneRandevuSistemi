@@ -14,8 +14,8 @@
         </h1>
 
         <p>
-            İhtiyacınıza uygun polikliniği bulun ve sağlık
-            hizmetlerimiz hakkında bilgi alın.
+            Hastanelerimizdeki poliklinikleri inceleyin,
+            ihtiyacınıza uygun hastane ve doktoru seçin.
         </p>
 
         <a href="#poliklinikler" class="btn btn-primary">
@@ -48,9 +48,9 @@
         <h2>Sağlığınız bizim için önemli.</h2>
 
         <p>
-            Size uygun polikliniği seçerek başlayın.
-            Polikliniklerimizi inceleyebilir ve randevu
-            işlemlerinizi hesabınız üzerinden yapabilirsiniz.
+            Kurum, hastane ve poliklinik seçerek doktorları
+            inceleyebilirsiniz. Randevu işlemlerinize
+            hesabınız üzerinden ulaşabilirsiniz.
         </p>
 
         <div class="welcome-footer">
@@ -68,30 +68,55 @@
         </div>
 
         <span class="section-description">
-            İlgilendiğiniz polikliniği seçin.
+            Hastane bilgisine göre polikliniğinizi seçin.
         </span>
     </div>
 
-    <div class="row g-3">
-        @foreach (var poliklinik in Model)
-        {
-            <div class="col-md-6 col-xl-3">
-                <div class="department-card">
-                    <span class="department-code">
-                        @poliklinik.Id.ToString("D2")
-                    </span>
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info" role="status">
+            Şu anda görüntülenebilecek aktif poliklinik bulunmuyor.
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var poliklinik in Model)
+            {
+                <div class="col-md-6 col-xl-3">
+                    <div class="department-card d-flex flex-column">
+                        <span class="department-code">
+                            @poliklinik.Id.ToString("D2")
+                        </span>
 
-                    <h3>@poliklinik.Ad</h3>
+                        <h3>@poliklinik.Ad</h3>
 
-                    <p>@poliklinik.Aciklama</p>
+                        <div class="mb-3">
+                            <div class="small text-muted mb-1">
+                                @poliklinik.Sube?.Kurum?.Ad
+                            </div>
 
-                    <a asp-controller="Randevu"
-                       asp-action="Olustur"
-                       asp-route-poliklinikId="@poliklinik.Id">
-                        Randevu Al →
-                    </a>
+                            <div class="fw-semibold">
+                                @poliklinik.Sube?.Ad
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(poliklinik.Aciklama))
+                        {
+                            <p>@poliklinik.Aciklama</p>
+                        }
+
+                        <a asp-controller="Randevu"
+                           asp-action="Olustur"
+                           asp-route-kurumId="@poliklinik.Sube?.KurumId"
+                           asp-route-subeId="@poliklinik.SubeId"
+                           asp-route-poliklinikId="@poliklinik.Id"
+                           class="mt-auto pt-2">
+                            Randevu Al →
+                        </a>
+                    </div>
                 </div>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
 </section>
