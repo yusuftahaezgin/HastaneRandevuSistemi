@@ -50,26 +50,19 @@ public class DoktorService : IDoktorService
         string unvan = model.Unvan.Trim();
         string email = model.Email.Trim();
 
-        bool aktifPoliklinikMevcut = await _context.Poliklinikler
-            .AnyAsync(p =>
-                p.Id == model.PoliklinikId && p.AktifMi);
-
-        if (!aktifPoliklinikMevcut)
-        {
-            throw new ArgumentException(
-                "Geçerli ve aktif bir poliklinik seçmelisiniz.");
-        }
+        await PoliklinikAtamasiniKontrolEtAsync(
+            model.PoliklinikId);
 
         var mevcutKullanici =
             await _userManager.FindByEmailAsync(email);
 
-        if (mevcutKullanici != null)
+        if (mevcutKullanici is not null)
         {
             throw new ArgumentException(
                 "Bu e-posta adresi zaten kayıtlı.");
         }
 
-        // Kullanıcı hesabı, rol ve doktor kaydı birlikte oluşturulur.
+        // Hesap, rol ve doktor kaydı birlikte oluşturulur.
         await using var transaction =
             await _context.Database.BeginTransactionAsync();
 
@@ -142,24 +135,19 @@ public class DoktorService : IDoktorService
             return false;
         }
 
-        bool poliklinikMevcut = await _context.Poliklinikler
-            .AnyAsync(p => p.Id == model.PoliklinikId);
-
-        if (!poliklinikMevcut)
-        {
-            throw new ArgumentException(
-                "Seçilen poliklinik bulunamadı.");
-        }
+        // Mevcut atama veritabanındaki kayıttan alınır.
+        await PoliklinikAtamasiniKontrolEtAsync(
+            model.PoliklinikId,
+            doktor.PoliklinikId);
 
         string ad = model.Ad.Trim();
         string soyad = model.Soyad.Trim();
         string unvan = model.Unvan.Trim();
 
-        // Kullanıcı ve doktor bilgileri birlikte güncellenir.
         await using var transaction =
             await _context.Database.BeginTransactionAsync();
 
-        if (doktor.Kullanici != null)
+        if (doktor.Kullanici is not null)
         {
             doktor.Kullanici.Ad = ad;
             doktor.Kullanici.Soyad = soyad;
@@ -207,7 +195,62 @@ public class DoktorService : IDoktorService
         return true;
     }
 
-    // ViewModel üzerindeki Required, StringLength gibi kuralları kontrol eder.
+    private async Task PoliklinikAtamasiniKontrolEtAsync(
+        int poliklinikId,
+        int? mevcutPoliklinikId = null)
+    {
+        if (poliklinikId <= 0)
+        {
+            throw new ArgumentException(
+                "Lütfen bir poliklinik seçin.");
+        }
+
+        var poliklinik = await _context.Poliklinikler
+            .AsNoTracking()
+            .Include(p => p.Sube)
+                .ThenInclude(s => s!.Kurum)
+            .FirstOrDefaultAsync(p => p.Id == poliklinikId);
+
+        if (poliklinik is null)
+        {
+            throw new ArgumentException(
+                "Seçilen poliklinik bulunamadı.");
+        }
+
+        if (poliklinik.Sube is null ||
+            poliklinik.Sube.Kurum is null)
+        {
+            throw new ArgumentException(
+                "Seçilen polikliniğin hastane veya kurum bağlantısı bulunamadı.");
+        }
+
+        // Atama değişmiyorsa mevcut kayıt korunabilir.
+        // Böylece pasif bir birimdeki doktorun adı gibi
+        // diğer bilgilerinin düzenlenmesi engellenmez.
+        if (mevcutPoliklinikId == poliklinikId)
+        {
+            return;
+        }
+
+        if (!poliklinik.Sube.Kurum.AktifMi)
+        {
+            throw new ArgumentException(
+                "Seçilen polikliniğin bağlı olduğu kurum pasiftir. Bu kuruma doktor atanamaz.");
+        }
+
+        if (!poliklinik.Sube.AktifMi)
+        {
+            throw new ArgumentException(
+                "Seçilen polikliniğin bağlı olduğu hastane pasiftir. Bu hastaneye doktor atanamaz.");
+        }
+
+        if (!poliklinik.AktifMi)
+        {
+            throw new ArgumentException(
+                "Seçilen poliklinik pasiftir. Doktor atamak için aktif bir poliklinik seçin.");
+        }
+    }
+
     private static void ModeliDogrula(object model)
     {
         var sonuclar = new List<ValidationResult>();

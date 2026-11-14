@@ -9,12 +9,14 @@ public interface IPoliklinikService
     Task<Poliklinik?> GetirAsync(int id);
 
     Task EkleAsync(
+        int subeId,
         string ad,
         string? aciklama,
         bool aktifMi);
 
     Task<bool> GuncelleAsync(
         int id,
+        int subeId,
         string ad,
         string? aciklama,
         bool aktifMi);

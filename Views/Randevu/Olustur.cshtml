@@ -1,7 +1,17 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
 @model HastaneRandevuSistemi.Models.RandevuSecimViewModel
 
 @{
     ViewData["Title"] = "Randevu Al";
+
+    var seciliKurum = Model.Kurumlar
+        .FirstOrDefault(k => k.Id == Model.SeciliKurumId);
+
+    var seciliSube = Model.Subeler
+        .FirstOrDefault(s => s.Id == Model.SeciliSubeId);
+
+    var seciliPoliklinik = Model.Poliklinikler
+        .FirstOrDefault(p => p.Id == Model.SeciliPoliklinikId);
 }
 
 <section class="booking-page">
@@ -10,49 +20,146 @@
         <h1>Randevu Al</h1>
 
         <p>
-            Önce polikliniğinizi seçin, ardından o poliklinikteki doktorları inceleyin.
+            Kurum, hastane ve poliklinik seçerek doktorları inceleyin.
         </p>
     </div>
 
+    <div asp-validation-summary="All"
+         class="text-danger mb-3"
+         role="alert">
+    </div>
+
     <div class="booking-panel">
-        <form asp-controller="Randevu"
-              asp-action="Olustur"
-              method="get">
+        @if (Model.Kurumlar.Count == 0)
+        {
+            <div class="alert alert-info mb-0">
+                Şu anda seçim yapabileceğiniz aktif bir kurum bulunmuyor.
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <form asp-controller="Randevu"
+                          asp-action="Olustur"
+                          method="get">
 
-            <div class="mb-3">
-                <label for="poliklinikId" class="form-label">
-                    Poliklinik
-                </label>
+                        <label for="kurumId" class="form-label">
+                            1. Kurum
+                        </label>
 
-                <select id="poliklinikId"
-                        name="poliklinikId"
-                        class="form-select"
-                        required>
+                        <select id="kurumId"
+                                name="kurumId"
+                                class="form-select"
+                                asp-items="@(new SelectList(
+                                    Model.Kurumlar,
+                                    "Id",
+                                    "Ad",
+                                    Model.SeciliKurumId))">
 
-                    <option value="">Poliklinik seçiniz</option>
+                            <option value="">Kurum seçin</option>
+                        </select>
 
-                    @foreach (var poliklinik in Model.Poliklinikler)
-                    {
-                        if (Model.SeciliPoliklinikId == poliklinik.Id)
+                        <button type="submit"
+                                class="btn btn-primary mt-3">
+                            Hastaneleri Göster
+                        </button>
+                    </form>
+                </div>
+
+                @if (Model.SeciliKurumId.HasValue)
+                {
+                    <div class="col-lg-4">
+                        @if (Model.Subeler.Count == 0)
                         {
-                            <option value="@poliklinik.Id" selected>
-                                @poliklinik.Ad
-                            </option>
+                            <div class="alert alert-info mb-0">
+                                Bu kuruma bağlı aktif hastane bulunmuyor.
+                            </div>
                         }
                         else
                         {
-                            <option value="@poliklinik.Id">
-                                @poliklinik.Ad
-                            </option>
-                        }
-                    }
-                </select>
-            </div>
+                            <form asp-controller="Randevu"
+                                  asp-action="Olustur"
+                                  method="get">
 
-            <button type="submit" class="btn btn-primary">
-                Doktorları Göster
-            </button>
-        </form>
+                                <input type="hidden"
+                                       name="kurumId"
+                                       value="@Model.SeciliKurumId" />
+
+                                <label for="subeId" class="form-label">
+                                    2. Hastane
+                                </label>
+
+                                <select id="subeId"
+                                        name="subeId"
+                                        class="form-select"
+                                        asp-items="@(new SelectList(
+                                            Model.Subeler,
+                                            "Id",
+                                            "Ad",
+                                            Model.SeciliSubeId))">
+
+                                    <option value="">Hastane seçin</option>
+                                </select>
+
+                                <button type="submit"
+                                        class="btn btn-primary mt-3">
+                                    Poliklinikleri Göster
+                                </button>
+                            </form>
+                        }
+                    </div>
+                }
+
+                @if (Model.SeciliSubeId.HasValue)
+                {
+                    <div class="col-lg-4">
+                        @if (Model.Poliklinikler.Count == 0)
+                        {
+                            <div class="alert alert-info mb-0">
+                                Bu hastaneye bağlı aktif poliklinik bulunmuyor.
+                            </div>
+                        }
+                        else
+                        {
+                            <form asp-controller="Randevu"
+                                  asp-action="Olustur"
+                                  method="get">
+
+                                <input type="hidden"
+                                       name="kurumId"
+                                       value="@Model.SeciliKurumId" />
+
+                                <input type="hidden"
+                                       name="subeId"
+                                       value="@Model.SeciliSubeId" />
+
+                                <label for="poliklinikId" class="form-label">
+                                    3. Poliklinik
+                                </label>
+
+                                <select id="poliklinikId"
+                                        name="poliklinikId"
+                                        class="form-select"
+                                        asp-items="@(new SelectList(
+                                            Model.Poliklinikler,
+                                            "Id",
+                                            "Ad",
+                                            Model.SeciliPoliklinikId))">
+
+                                    <option value="">Poliklinik seçin</option>
+                                </select>
+
+                                <button type="submit"
+                                        class="btn btn-primary mt-3">
+                                    Doktorları Göster
+                                </button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        }
     </div>
 
     @if (Model.SeciliPoliklinikId.HasValue)
@@ -60,43 +167,56 @@
         <div class="booking-doctors">
             <h2>Doktorlar</h2>
 
+            <p class="text-muted">
+                @seciliKurum?.Ad /
+                @seciliSube?.Ad /
+                @seciliPoliklinik?.Ad
+            </p>
+
             @if (Model.Doktorlar.Count == 0)
             {
-                <p>
+                <div class="alert alert-info">
                     Bu poliklinikte şu anda aktif doktor bulunmuyor.
-                </p>
+                </div>
             }
             else
             {
                 <div class="row g-3">
                     @foreach (var doktor in Model.Doktorlar)
                     {
+                        var seciliMi = Model.SeciliDoktorId == doktor.Id;
+
                         <div class="col-md-6 col-xl-4">
                             <div class="doctor-card">
                                 <div class="doctor-card-top">
                                     <span class="doctor-label">DOKTOR</span>
 
-                                    <span class="doctor-id">
-                                        No: @doktor.Id.ToString("D3")
-                                    </span>
+                                    @if (seciliMi)
+                                    {
+                                        <span class="badge bg-success">
+                                            Seçildi
+                                        </span>
+                                    }
                                 </div>
 
-                                <h3>
-                                    @doktor.Unvan
-                                    @doktor.Ad
-                                    @doktor.Soyad
-                                </h3>
+                                <h3>@doktor.GorunenAdGetir()</h3>
 
                                 <p class="doctor-specialty">
                                     @doktor.Poliklinik.Ad
                                 </p>
 
+                                <p class="text-muted">
+                                    @seciliSube?.Ad
+                                </p>
+
                                 <a asp-controller="Randevu"
                                    asp-action="Olustur"
+                                   asp-route-kurumId="@Model.SeciliKurumId"
+                                   asp-route-subeId="@Model.SeciliSubeId"
                                    asp-route-poliklinikId="@Model.SeciliPoliklinikId"
                                    asp-route-doktorId="@doktor.Id"
                                    class="doctor-select-link">
-                                    Doktoru Seç →
+                                    @(seciliMi ? "Seçilen Doktor" : "Doktoru Seç →")
                                 </a>
                             </div>
                         </div>
@@ -109,22 +229,23 @@
     @if (Model.SeciliDoktor is not null)
     {
         <div class="booking-panel selected-doctor">
-            <span class="page-label">SEÇİLEN DOKTOR</span>
+            <span class="page-label">SEÇİMİNİZ</span>
 
-            <h2>
-                @Model.SeciliDoktor.Unvan
-                @Model.SeciliDoktor.Ad
-                @Model.SeciliDoktor.Soyad
-            </h2>
+            <h2>@Model.SeciliDoktor.GorunenAdGetir()</h2>
 
-            <p>
-                @Model.SeciliDoktor.Poliklinik.Ad
-            </p>
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Kurum</dt>
+                <dd class="col-sm-9">@seciliKurum?.Ad</dd>
 
-            <p class="text-muted mb-0">
-                Doktor seçiminiz kaydedilmeden önceki adımdır.
-                Bir sonraki geliştirmede bu ekrana doktorun müsait gün ve saatlerini
-                ve randevu oluşturma işlemini ekleyeceğiz.
+                <dt class="col-sm-3">Hastane</dt>
+                <dd class="col-sm-9">@seciliSube?.Ad</dd>
+
+                <dt class="col-sm-3">Poliklinik</dt>
+                <dd class="col-sm-9">@seciliPoliklinik?.Ad</dd>
+            </dl>
+
+            <p class="text-muted mt-3 mb-0">
+                Henüz randevu oluşturulmadı.
             </p>
         </div>
     }

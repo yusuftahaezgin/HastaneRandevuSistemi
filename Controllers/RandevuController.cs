@@ -17,18 +17,43 @@ public class RandevuController : Controller
 
     [HttpGet]
     public async Task<IActionResult> Olustur(
+        int? kurumId,
+        int? subeId,
         int? poliklinikId,
         int? doktorId)
     {
-        var model = await _randevuSecimService.HazirlaAsync(
-            poliklinikId,
-            doktorId);
-
-        if (model is null)
+        // Örneğin adres çubuğundan kurumId=abc gönderilmesi.
+        if (!ModelState.IsValid)
         {
-            return NotFound();
+            ModelState.Clear();
+
+            ModelState.AddModelError(
+                string.Empty,
+                "Seçim bilgileri geçersiz. Lütfen yeniden seçim yapın.");
+
+            var bosModel = await _randevuSecimService.HazirlaAsync();
+
+            return View(bosModel);
         }
 
-        return View(model);
+        try
+        {
+            var model = await _randevuSecimService.HazirlaAsync(
+                kurumId: kurumId,
+                subeId: subeId,
+                poliklinikId: poliklinikId,
+                doktorId: doktorId);
+
+            return View(model);
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.Clear();
+            ModelState.AddModelError(string.Empty, ex.Message);
+
+            var bosModel = await _randevuSecimService.HazirlaAsync();
+
+            return View(bosModel);
+        }
     }
 }

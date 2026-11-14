@@ -191,7 +191,12 @@ namespace HastaneRandevuSistemi.Migrations
                     b.Property<bool>("AktifMi")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("SubeId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("SubeId");
 
                     b.ToTable("Poliklinikler", (string)null);
 
@@ -201,84 +206,96 @@ namespace HastaneRandevuSistemi.Migrations
                             Id = 1,
                             Aciklama = "İç hastalıkları",
                             Ad = "Dahiliye",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 2,
                             Aciklama = "Kalp ve dolaşım sistemi hastalıkları.",
                             Ad = "Kardiyoloji",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 3,
                             Aciklama = "Çocuk sağlığı ve hastalıklarının değerlendirilmesi.",
                             Ad = "Çocuk Hastalıkları",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 4,
                             Aciklama = "Cilt hastalıkları",
                             Ad = "Dermatoloji",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 5,
                             Aciklama = "Kemik, eklem ve kas-iskelet sistemi sağlığı.",
                             Ad = "Ortopedi ve Travmatoloji",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 6,
                             Aciklama = "Göz ve görme sağlığı.",
                             Ad = "Göz Hastalıkları",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 7,
                             Aciklama = "Sinir sistemi hastalıkları",
                             Ad = "Nöroloji",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 8,
                             Aciklama = "Kulak, burun ve boğaz hastalıkları.",
                             Ad = "Kulak Burun Boğaz",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 9,
                             Aciklama = "Kadın sağlığı ve gebelik takibi.",
                             Ad = "Kadın Hastalıkları ve Doğum",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 10,
                             Aciklama = "İdrar yolları ve ilgili hastalıklar.",
                             Ad = "Üroloji",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 11,
                             Aciklama = "Cerrahi değerlendirme ve tedavi süreçleri.",
                             Ad = "Genel Cerrahi",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         },
                         new
                         {
                             Id = 12,
                             Aciklama = "Ruh sağlığı değerlendirmeleri.",
                             Ad = "Psikiyatri",
-                            AktifMi = true
+                            AktifMi = true,
+                            SubeId = 2
                         });
                 });
 
@@ -630,6 +647,17 @@ namespace HastaneRandevuSistemi.Migrations
                     b.Navigation("Kullanici");
 
                     b.Navigation("Poliklinik");
+                });
+
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.Poliklinik", b =>
+                {
+                    b.HasOne("HastaneRandevuSistemi.Models.Sube", "Sube")
+                        .WithMany()
+                        .HasForeignKey("SubeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Sube");
                 });
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Sube", b =>

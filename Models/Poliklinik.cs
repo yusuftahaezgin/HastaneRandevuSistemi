@@ -10,6 +10,10 @@ public class Poliklinik
 
     public bool AktifMi { get; private set; } = true;
 
+    public int? SubeId { get; private set; }
+
+    public Sube? Sube { get; private set; }
+
     public ICollection<Calisan> Calisanlar { get; set; }
         = new List<Calisan>();
 
@@ -26,7 +30,9 @@ public class Poliklinik
         AktiflikAyarla(aktifMi);
     }
 
-    public void BilgileriGuncelle(string ad, string? aciklama)
+    public void BilgileriGuncelle(
+        string ad,
+        string? aciklama)
     {
         var temizAd = ad?.Trim() ?? string.Empty;
         var temizAciklama = aciklama?.Trim() ?? string.Empty;
@@ -51,6 +57,17 @@ public class Poliklinik
 
         Ad = temizAd;
         Aciklama = temizAciklama;
+    }
+
+    public void SubeyeBagla(int subeId)
+    {
+        if (subeId <= 0)
+        {
+            throw new ArgumentException(
+                "Geçerli bir şube seçilmelidir.");
+        }
+
+        SubeId = subeId;
     }
 
     public void AktiflikAyarla(bool aktifMi)

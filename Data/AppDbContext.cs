@@ -37,28 +37,32 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 Id = "11111111-1111-1111-1111-111111111111",
                 Name = "Hasta",
                 NormalizedName = "HASTA",
-                ConcurrencyStamp = "11111111-1111-1111-1111-111111111111"
+                ConcurrencyStamp =
+                    "11111111-1111-1111-1111-111111111111"
             },
             new IdentityRole
             {
                 Id = "22222222-2222-2222-2222-222222222222",
                 Name = "Doktor",
                 NormalizedName = "DOKTOR",
-                ConcurrencyStamp = "22222222-2222-2222-2222-222222222222"
+                ConcurrencyStamp =
+                    "22222222-2222-2222-2222-222222222222"
             },
             new IdentityRole
             {
                 Id = "33333333-3333-3333-3333-333333333333",
                 Name = "Yonetici",
                 NormalizedName = "YONETICI",
-                ConcurrencyStamp = "33333333-3333-3333-3333-333333333333"
+                ConcurrencyStamp =
+                    "33333333-3333-3333-3333-333333333333"
             },
             new IdentityRole
             {
                 Id = "44444444-4444-4444-4444-444444444444",
                 Name = "SaglikPersoneli",
                 NormalizedName = "SAGLIKPERSONELI",
-                ConcurrencyStamp = "44444444-4444-4444-4444-444444444444"
+                ConcurrencyStamp =
+                    "44444444-4444-4444-4444-444444444444"
             }
         );
 
@@ -107,7 +111,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         sube.HasOne(s => s.Kurum)
             .WithMany(k => k.Subeler)
             .HasForeignKey(s => s.KurumId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
 
         // POLİKLİNİK TABLOSU
 
@@ -122,12 +127,24 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasMaxLength(120);
 
         poliklinik.Property(p => p.Aciklama)
+            .IsRequired()
             .HasMaxLength(300);
+
+        // Hastane bağlantısı artık veritabanında zorunlu.
+        poliklinik.HasOne(p => p.Sube)
+            .WithMany()
+            .HasForeignKey(p => p.SubeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
+
+        // BAŞLANGIÇ POLİKLİNİK VERİLERİ
+        // SubeId = 2: Sakarya Eğitim ve Araştırma Hastanesi.
 
         poliklinik.HasData(
             new
             {
                 Id = 1,
+                SubeId = 2,
                 Ad = "Dahiliye",
                 Aciklama = "İç hastalıkları",
                 AktifMi = true
@@ -135,6 +152,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             new
             {
                 Id = 2,
+                SubeId = 2,
                 Ad = "Kardiyoloji",
                 Aciklama = "Kalp ve dolaşım sistemi hastalıkları.",
                 AktifMi = true
@@ -142,13 +160,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             new
             {
                 Id = 3,
+                SubeId = 2,
                 Ad = "Çocuk Hastalıkları",
-                Aciklama = "Çocuk sağlığı ve hastalıklarının değerlendirilmesi.",
+                Aciklama =
+                    "Çocuk sağlığı ve hastalıklarının değerlendirilmesi.",
                 AktifMi = true
             },
             new
             {
                 Id = 4,
+                SubeId = 2,
                 Ad = "Dermatoloji",
                 Aciklama = "Cilt hastalıkları",
                 AktifMi = true
@@ -156,13 +177,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             new
             {
                 Id = 5,
+                SubeId = 2,
                 Ad = "Ortopedi ve Travmatoloji",
-                Aciklama = "Kemik, eklem ve kas-iskelet sistemi sağlığı.",
+                Aciklama =
+                    "Kemik, eklem ve kas-iskelet sistemi sağlığı.",
                 AktifMi = true
             },
             new
             {
                 Id = 6,
+                SubeId = 2,
                 Ad = "Göz Hastalıkları",
                 Aciklama = "Göz ve görme sağlığı.",
                 AktifMi = true
@@ -170,6 +194,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             new
             {
                 Id = 7,
+                SubeId = 2,
                 Ad = "Nöroloji",
                 Aciklama = "Sinir sistemi hastalıkları",
                 AktifMi = true
@@ -177,6 +202,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             new
             {
                 Id = 8,
+                SubeId = 2,
                 Ad = "Kulak Burun Boğaz",
                 Aciklama = "Kulak, burun ve boğaz hastalıkları.",
                 AktifMi = true
@@ -184,6 +210,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             new
             {
                 Id = 9,
+                SubeId = 2,
                 Ad = "Kadın Hastalıkları ve Doğum",
                 Aciklama = "Kadın sağlığı ve gebelik takibi.",
                 AktifMi = true
@@ -191,6 +218,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             new
             {
                 Id = 10,
+                SubeId = 2,
                 Ad = "Üroloji",
                 Aciklama = "İdrar yolları ve ilgili hastalıklar.",
                 AktifMi = true
@@ -198,13 +226,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             new
             {
                 Id = 11,
+                SubeId = 2,
                 Ad = "Genel Cerrahi",
-                Aciklama = "Cerrahi değerlendirme ve tedavi süreçleri.",
+                Aciklama =
+                    "Cerrahi değerlendirme ve tedavi süreçleri.",
                 AktifMi = true
             },
             new
             {
                 Id = 12,
+                SubeId = 2,
                 Ad = "Psikiyatri",
                 Aciklama = "Ruh sağlığı değerlendirmeleri.",
                 AktifMi = true
@@ -232,11 +263,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(c => c.PoliklinikId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Her çalışan en fazla bir giriş hesabına bağlanır.
+        // Aynı hesap birden fazla çalışana bağlanamaz.
         calisan.HasOne(c => c.Kullanici)
             .WithOne()
             .HasForeignKey<Calisan>(c => c.KullaniciId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Doktor ve sağlık personeli aynı tabloda tutulur.
         calisan.HasDiscriminator<string>("CalisanTuru")
             .HasValue<Doktor>("Doktor")
             .HasValue<SaglikPersoneli>("SaglikPersoneli");

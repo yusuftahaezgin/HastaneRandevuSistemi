@@ -41,7 +41,6 @@ public class AdminController : Controller
     public async Task<IActionResult> Kurumlar()
     {
         var kurumlar = await _kurumService.ListeleAsync();
-
         return View(kurumlar);
     }
 
@@ -71,12 +70,10 @@ public class AdminController : Controller
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             return View(model);
         }
 
         TempData["Basari"] = "Kurum başarıyla eklendi.";
-
         return RedirectToAction(nameof(Kurumlar));
     }
 
@@ -140,12 +137,10 @@ public class AdminController : Controller
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             return View(model);
         }
 
         TempData["Basari"] = "Kurum başarıyla güncellendi.";
-
         return RedirectToAction(nameof(Kurumlar));
     }
 
@@ -161,7 +156,6 @@ public class AdminController : Controller
         }
 
         TempData["Basari"] = "Kurumun aktiflik durumu güncellendi.";
-
         return RedirectToAction(nameof(Kurumlar));
     }
 
@@ -171,7 +165,6 @@ public class AdminController : Controller
     public async Task<IActionResult> Subeler()
     {
         var subeler = await _subeService.ListeleAsync();
-
         return View(subeler);
     }
 
@@ -179,7 +172,6 @@ public class AdminController : Controller
     public async Task<IActionResult> SubeEkle()
     {
         await KurumListesiniHazirla();
-
         return View(new SubeFormViewModel());
     }
 
@@ -191,7 +183,6 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
         {
             await KurumListesiniHazirla(model.KurumId);
-
             return View(model);
         }
 
@@ -209,12 +200,10 @@ public class AdminController : Controller
             ModelState.AddModelError(string.Empty, ex.Message);
 
             await KurumListesiniHazirla(model.KurumId);
-
             return View(model);
         }
 
         TempData["Basari"] = "Şube başarıyla eklendi.";
-
         return RedirectToAction(nameof(Subeler));
     }
 
@@ -263,7 +252,6 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        // Düzenleme işlemi şubenin bağlı olduğu kurumu değiştirmez.
         if (model.KurumId != sube.KurumId)
         {
             return BadRequest();
@@ -295,12 +283,10 @@ public class AdminController : Controller
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             return View(model);
         }
 
         TempData["Basari"] = "Şube başarıyla güncellendi.";
-
         return RedirectToAction(nameof(Subeler));
     }
 
@@ -316,7 +302,6 @@ public class AdminController : Controller
         }
 
         TempData["Basari"] = "Şubenin aktiflik durumu güncellendi.";
-
         return RedirectToAction(nameof(Subeler));
     }
 
@@ -326,13 +311,13 @@ public class AdminController : Controller
     public async Task<IActionResult> Poliklinikler()
     {
         var poliklinikler = await _poliklinikService.ListeleAsync();
-
         return View(poliklinikler);
     }
 
     [HttpGet]
-    public IActionResult PoliklinikEkle()
+    public async Task<IActionResult> PoliklinikEkle()
     {
+        await PoliklinikIcinSubeListesiniHazirla();
         return View(new PoliklinikFormViewModel());
     }
 
@@ -343,12 +328,14 @@ public class AdminController : Controller
     {
         if (!ModelState.IsValid)
         {
+            await PoliklinikIcinSubeListesiniHazirla(model.SubeId);
             return View(model);
         }
 
         try
         {
             await _poliklinikService.EkleAsync(
+                model.SubeId,
                 model.Ad,
                 model.Aciklama,
                 model.AktifMi);
@@ -357,11 +344,11 @@ public class AdminController : Controller
         {
             ModelState.AddModelError(string.Empty, ex.Message);
 
+            await PoliklinikIcinSubeListesiniHazirla(model.SubeId);
             return View(model);
         }
 
         TempData["Basari"] = "Poliklinik başarıyla eklendi.";
-
         return RedirectToAction(nameof(Poliklinikler));
     }
 
@@ -378,10 +365,15 @@ public class AdminController : Controller
         var model = new PoliklinikFormViewModel
         {
             Id = poliklinik.Id,
+            SubeId = poliklinik.SubeId ?? 0,
             Ad = poliklinik.Ad,
             Aciklama = poliklinik.Aciklama,
             AktifMi = poliklinik.AktifMi
         };
+
+        await PoliklinikIcinSubeListesiniHazirla(
+            model.SubeId,
+            poliklinik.SubeId);
 
         return View(model);
     }
@@ -389,17 +381,35 @@ public class AdminController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PoliklinikDuzenle(
+        int id,
         PoliklinikFormViewModel model)
     {
+        if (id != model.Id)
+        {
+            return BadRequest();
+        }
+
+        var poliklinik = await _poliklinikService.GetirAsync(id);
+
+        if (poliklinik is null)
+        {
+            return NotFound();
+        }
+
         if (!ModelState.IsValid)
         {
+            await PoliklinikIcinSubeListesiniHazirla(
+                model.SubeId,
+                poliklinik.SubeId);
+
             return View(model);
         }
 
         try
         {
             var guncellendi = await _poliklinikService.GuncelleAsync(
-                model.Id,
+                id,
+                model.SubeId,
                 model.Ad,
                 model.Aciklama,
                 model.AktifMi);
@@ -413,11 +423,14 @@ public class AdminController : Controller
         {
             ModelState.AddModelError(string.Empty, ex.Message);
 
+            await PoliklinikIcinSubeListesiniHazirla(
+                model.SubeId,
+                poliklinik.SubeId);
+
             return View(model);
         }
 
         TempData["Basari"] = "Poliklinik başarıyla güncellendi.";
-
         return RedirectToAction(nameof(Poliklinikler));
     }
 
@@ -433,7 +446,6 @@ public class AdminController : Controller
         }
 
         TempData["Basari"] = "Poliklinik durumu güncellendi.";
-
         return RedirectToAction(nameof(Poliklinikler));
     }
 
@@ -443,7 +455,6 @@ public class AdminController : Controller
     public async Task<IActionResult> Doktorlar()
     {
         var doktorlar = await _doktorService.ListeleAsync();
-
         return View(doktorlar);
     }
 
@@ -451,7 +462,6 @@ public class AdminController : Controller
     public async Task<IActionResult> DoktorEkle()
     {
         await PoliklinikListesiniHazirla();
-
         return View(new DoktorEkleViewModel());
     }
 
@@ -463,7 +473,6 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
         {
             await PoliklinikListesiniHazirla(model.PoliklinikId);
-
             return View(model);
         }
 
@@ -476,7 +485,6 @@ public class AdminController : Controller
             ModelState.AddModelError(string.Empty, ex.Message);
 
             await PoliklinikListesiniHazirla(model.PoliklinikId);
-
             return View(model);
         }
 
@@ -508,7 +516,7 @@ public class AdminController : Controller
 
         await PoliklinikListesiniHazirla(
             model.PoliklinikId,
-            pasifleriDahilEt: true);
+            doktor.PoliklinikId);
 
         return View(model);
     }
@@ -531,7 +539,7 @@ public class AdminController : Controller
         {
             await PoliklinikListesiniHazirla(
                 model.PoliklinikId,
-                pasifleriDahilEt: true);
+                doktor.PoliklinikId);
 
             return View(model);
         }
@@ -551,13 +559,12 @@ public class AdminController : Controller
 
             await PoliklinikListesiniHazirla(
                 model.PoliklinikId,
-                pasifleriDahilEt: true);
+                doktor.PoliklinikId);
 
             return View(model);
         }
 
         TempData["Basari"] = "Doktor bilgileri güncellendi.";
-
         return RedirectToAction(nameof(Doktorlar));
     }
 
@@ -573,7 +580,6 @@ public class AdminController : Controller
         }
 
         TempData["Basari"] = "Doktor durumu güncellendi.";
-
         return RedirectToAction(nameof(Doktorlar));
     }
 
@@ -583,7 +589,6 @@ public class AdminController : Controller
     public async Task<IActionResult> SaglikPersonelleri()
     {
         var personeller = await _personelService.ListeleAsync();
-
         return View(personeller);
     }
 
@@ -591,7 +596,6 @@ public class AdminController : Controller
     public async Task<IActionResult> SaglikPersoneliEkle()
     {
         await PoliklinikListesiniHazirla();
-
         return View(new SaglikPersoneliEkleViewModel());
     }
 
@@ -603,7 +607,6 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
         {
             await PoliklinikListesiniHazirla(model.PoliklinikId);
-
             return View(model);
         }
 
@@ -616,7 +619,6 @@ public class AdminController : Controller
             ModelState.AddModelError(string.Empty, ex.Message);
 
             await PoliklinikListesiniHazirla(model.PoliklinikId);
-
             return View(model);
         }
 
@@ -648,7 +650,7 @@ public class AdminController : Controller
 
         await PoliklinikListesiniHazirla(
             model.PoliklinikId,
-            mevcutPoliklinikId: personel.PoliklinikId);
+            personel.PoliklinikId);
 
         return View(model);
     }
@@ -677,7 +679,7 @@ public class AdminController : Controller
         {
             await PoliklinikListesiniHazirla(
                 model.PoliklinikId,
-                mevcutPoliklinikId: personel.PoliklinikId);
+                personel.PoliklinikId);
 
             return View(model);
         }
@@ -697,13 +699,12 @@ public class AdminController : Controller
 
             await PoliklinikListesiniHazirla(
                 model.PoliklinikId,
-                mevcutPoliklinikId: personel.PoliklinikId);
+                personel.PoliklinikId);
 
             return View(model);
         }
 
         TempData["Basari"] = "Sağlık personeli başarıyla güncellendi.";
-
         return RedirectToAction(nameof(SaglikPersonelleri));
     }
 
@@ -719,13 +720,13 @@ public class AdminController : Controller
         }
 
         TempData["Basari"] = "Personelin aktiflik durumu güncellendi.";
-
         return RedirectToAction(nameof(SaglikPersonelleri));
     }
 
-    // FORM SAYFALARI İÇİN KURUM SEÇENEKLERİ
+    // FORM SEÇENEKLERİ
 
-    private async Task KurumListesiniHazirla(int? seciliId = null)
+    private async Task KurumListesiniHazirla(
+        int? seciliId = null)
     {
         var kurumlar = await _kurumService.ListeleAsync();
 
@@ -744,27 +745,93 @@ public class AdminController : Controller
         ViewBag.AktifKurumVar = secenekler.Count > 0;
     }
 
-    // FORM SAYFALARI İÇİN POLİKLİNİK SEÇENEKLERİ
+    private async Task PoliklinikIcinSubeListesiniHazirla(
+        int? seciliId = null,
+        int? mevcutSubeId = null)
+    {
+        var subeler = await _subeService.ListeleAsync();
+
+        var secenekler = subeler
+            .Where(s =>
+                (s.AktifMi && s.Kurum.AktifMi) ||
+                s.Id == mevcutSubeId)
+            .OrderBy(s => s.Kurum.Ad)
+            .ThenBy(s => s.Ad)
+            .Select(s => new SelectListItem
+            {
+                Value = s.Id.ToString(),
+                Text = $"{s.Kurum.Ad} / {s.Ad}" +
+                    (!s.Kurum.AktifMi ? " (Kurum pasif)" : "") +
+                    (!s.AktifMi ? " (Hastane pasif)" : ""),
+                Selected = s.Id == seciliId
+            })
+            .ToList();
+
+        ViewBag.Subeler = secenekler;
+        ViewBag.SecilebilirSubeVar = secenekler.Count > 0;
+    }
 
     private async Task PoliklinikListesiniHazirla(
         int? seciliId = null,
-        bool pasifleriDahilEt = false,
         int? mevcutPoliklinikId = null)
     {
         var poliklinikler = await _poliklinikService.ListeleAsync();
 
         ViewBag.Poliklinikler = poliklinikler
             .Where(p =>
-                pasifleriDahilEt ||
-                p.AktifMi ||
+                YeniAtamayaUygunMu(p) ||
                 p.Id == mevcutPoliklinikId)
-            .OrderBy(p => p.Ad)
+            .OrderBy(p => p.Sube?.Ad)
+            .ThenBy(p => p.Ad)
             .Select(p => new SelectListItem
             {
                 Value = p.Id.ToString(),
-                Text = p.AktifMi ? p.Ad : $"{p.Ad} (Pasif)",
+                Text = PoliklinikSecenekMetni(p),
                 Selected = p.Id == seciliId
             })
             .ToList();
+    }
+
+    private static bool YeniAtamayaUygunMu(
+        Poliklinik poliklinik)
+    {
+        return poliklinik.AktifMi &&
+               poliklinik.Sube is not null &&
+               poliklinik.Sube.AktifMi &&
+               poliklinik.Sube.Kurum is not null &&
+               poliklinik.Sube.Kurum.AktifMi;
+    }
+
+    private static string PoliklinikSecenekMetni(
+        Poliklinik poliklinik)
+    {
+        var hastaneAdi =
+            poliklinik.Sube?.Ad ?? "Hastane atanmamış";
+
+        var metin = $"{hastaneAdi} / {poliklinik.Ad}";
+
+        if (!poliklinik.AktifMi)
+        {
+            metin += " (Poliklinik pasif)";
+        }
+
+        if (poliklinik.Sube is not null)
+        {
+            if (!poliklinik.Sube.AktifMi)
+            {
+                metin += " (Hastane pasif)";
+            }
+
+            if (poliklinik.Sube.Kurum is null)
+            {
+                metin += " (Kurum bağlantısı bulunamadı)";
+            }
+            else if (!poliklinik.Sube.Kurum.AktifMi)
+            {
+                metin += " (Kurum pasif)";
+            }
+        }
+
+        return metin;
     }
 }

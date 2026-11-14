@@ -24,7 +24,11 @@ public class PoliklinikService : IPoliklinikService
     {
         return await _context.Poliklinikler
             .AsNoTracking()
-            .OrderBy(p => p.Ad)
+            .Include(p => p.Sube)
+                .ThenInclude(s => s!.Kurum)
+            .OrderBy(p => p.Sube!.Kurum.Ad)
+            .ThenBy(p => p.Sube!.Ad)
+            .ThenBy(p => p.Ad)
             .ToListAsync();
     }
 
@@ -32,20 +36,29 @@ public class PoliklinikService : IPoliklinikService
     {
         return await _context.Poliklinikler
             .AsNoTracking()
+            .Include(p => p.Sube)
+                .ThenInclude(s => s!.Kurum)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task EkleAsync(
+        int subeId,
         string ad,
         string? aciklama,
         bool aktifMi)
     {
+        await SubeSeciminiKontrolEtAsync(subeId);
+
         var poliklinik = new Poliklinik(
             ad,
             aciklama,
             aktifMi);
 
-        await AyniAdKontrolEtAsync(poliklinik.Ad);
+        poliklinik.SubeyeBagla(subeId);
+
+        await AyniAdKontrolEtAsync(
+            subeId,
+            poliklinik.Ad);
 
         _context.Poliklinikler.Add(poliklinik);
 
@@ -54,6 +67,7 @@ public class PoliklinikService : IPoliklinikService
 
     public async Task<bool> GuncelleAsync(
         int id,
+        int subeId,
         string ad,
         string? aciklama,
         bool aktifMi)
@@ -66,15 +80,22 @@ public class PoliklinikService : IPoliklinikService
             return false;
         }
 
+        await SubeSeciminiKontrolEtAsync(
+            subeId,
+            poliklinik.SubeId);
+
         var temizAd = ad?.Trim() ?? string.Empty;
 
-        // Düzenlenen kayıt, kendi adıyla karşılaştırılmaz.
-        await AyniAdKontrolEtAsync(temizAd, id);
+        await AyniAdKontrolEtAsync(
+            subeId,
+            temizAd,
+            id);
 
         poliklinik.BilgileriGuncelle(
             temizAd,
             aciklama);
 
+        poliklinik.SubeyeBagla(subeId);
         poliklinik.AktiflikAyarla(aktifMi);
 
         await _context.SaveChangesAsync();
@@ -99,15 +120,59 @@ public class PoliklinikService : IPoliklinikService
         return true;
     }
 
+    private async Task SubeSeciminiKontrolEtAsync(
+        int subeId,
+        int? mevcutSubeId = null)
+    {
+        if (subeId <= 0)
+        {
+            throw new ArgumentException(
+                "Lütfen bir hastane seçin.");
+        }
+
+        var sube = await _context.Subeler
+            .AsNoTracking()
+            .Include(s => s.Kurum)
+            .FirstOrDefaultAsync(s => s.Id == subeId);
+
+        if (sube is null)
+        {
+            throw new ArgumentException(
+                "Seçilen hastane bulunamadı.");
+        }
+
+        // Mevcut hastane sonradan pasif yapılmış olabilir.
+        // Hastaneyi değiştirmeden bilgileri düzenlemeye izin verilir.
+        if (mevcutSubeId == subeId)
+        {
+            return;
+        }
+
+        if (!sube.Kurum.AktifMi)
+        {
+            throw new ArgumentException(
+                "Seçilen hastanenin bağlı olduğu kurum pasiftir.");
+        }
+
+        if (!sube.AktifMi)
+        {
+            throw new ArgumentException(
+                "Pasif bir hastaneye poliklinik eklenemez veya taşınamaz.");
+        }
+    }
+
     private async Task AyniAdKontrolEtAsync(
+        int subeId,
         string ad,
         int? haricTutulanId = null)
     {
         string karsilastirilacakAd = AdiNormallestir(ad);
 
+        // Karşılaştırma yalnızca seçilen hastane içinde yapılır.
+        // Pasif poliklinikler de kontrole dahildir.
         var sorgu = _context.Poliklinikler
             .AsNoTracking()
-            .AsQueryable();
+            .Where(p => p.SubeId == subeId);
 
         if (haricTutulanId.HasValue)
         {
@@ -115,8 +180,6 @@ public class PoliklinikService : IPoliklinikService
                 p => p.Id != haricTutulanId.Value);
         }
 
-        // Yalnızca isimleri getir.
-        // Pasif kayıtlar da aynı isim kontrolüne dahildir.
         var mevcutAdlar = await sorgu
             .Select(p => p.Ad)
             .ToListAsync();
@@ -130,7 +193,7 @@ public class PoliklinikService : IPoliklinikService
         if (mevcut)
         {
             throw new ArgumentException(
-                "Bu isimde bir poliklinik zaten mevcut.");
+                "Bu hastanede aynı isimde bir poliklinik zaten mevcut.");
         }
     }
 
@@ -139,9 +202,7 @@ public class PoliklinikService : IPoliklinikService
         string sonuc = ad.Trim();
 
         sonuc = sonuc.Normalize(NormalizationForm.FormC);
-
         sonuc = Regex.Replace(sonuc, @"\s+", " ");
-
         sonuc = sonuc.ToUpper(TurkceKultur);
 
         return sonuc.Normalize(NormalizationForm.FormC);
