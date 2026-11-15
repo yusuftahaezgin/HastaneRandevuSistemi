@@ -2,17 +2,32 @@
     var girisYapildi = User.Identity?.IsAuthenticated == true;
     var yoneticiMi = girisYapildi && User.IsInRole("Yonetici");
 
-    var mevcutController =
-        ViewContext.RouteData.Values["controller"]?.ToString();
+    var calisanMi = girisYapildi
+        && !yoneticiMi
+        && (User.IsInRole("Doktor")
+            || User.IsInRole("SaglikPersoneli"));
 
-    var mevcutAction =
-        ViewContext.RouteData.Values["action"]?.ToString();
+    var hastaMi = girisYapildi
+        && !yoneticiMi
+        && !calisanMi
+        && User.IsInRole("Hasta");
 
-    var yonetimSayfasinda =
-        string.Equals(
-            mevcutController,
-            "Admin",
-            StringComparison.OrdinalIgnoreCase);
+    var anaController = calisanMi ? "Calisan" : "Home";
+    var anaAction = calisanMi ? "Randevular" : "Index";
+
+    var yonetimBaglantilari = new[]
+    {
+        ("Index", "Yönetici Paneli"),
+        ("UcretVeHizmetler", "Ücret ve Hizmet Yönetimi"),
+        ("Randevular", "Randevu Onayları"),
+        ("HastaneSaatleri", "Hastane Çalışma Saatleri"),
+        ("CalismaSaatleri", "Doktor Çalışma Saatleri"),
+        ("Kurumlar", "Kurum Yönetimi"),
+        ("Subeler", "Şube Yönetimi"),
+        ("Poliklinikler", "Poliklinik Yönetimi"),
+        ("Doktorlar", "Doktor Yönetimi"),
+        ("SaglikPersonelleri", "Sağlık Personeli Yönetimi")
+    };
 }
 
 <!DOCTYPE html>
@@ -40,8 +55,8 @@
         <nav class="navbar navbar-expand-lg app-navbar">
             <div class="container">
                 <a class="navbar-brand app-brand"
-                   asp-controller="Home"
-                   asp-action="Index">
+                   asp-controller="@anaController"
+                   asp-action="@anaAction">
 
                     <span class="brand-mark" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -78,86 +93,14 @@
 
                 <div class="collapse navbar-collapse" id="mainNavbar">
                     <ul class="navbar-nav ms-auto align-items-lg-center">
-                        <li class="nav-item">
-                            <a class="nav-link app-nav-link"
-                               asp-controller="Home"
-                               asp-action="Index">
-                                Ana Sayfa
-                            </a>
-                        </li>
-
-                        @if (yoneticiMi)
+                        @if (calisanMi)
                         {
-                            <li class="nav-item dropdown">
-                                <button class="nav-link app-nav-link dropdown-toggle border-0 bg-transparent @(yonetimSayfasinda ? "fw-bold" : "")"
-                                        id="yonetimMenu"
-                                        type="button"
-                                        data-bs-toggle="dropdown"
-                                        aria-expanded="false">
-                                    Yönetim Panelleri
-                                </button>
-
-                                <ul class="dropdown-menu dropdown-menu-end"
-                                    aria-labelledby="yonetimMenu">
-                                    <li>
-                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction == "Index" ? "active" : "")"
-                                           asp-controller="Admin"
-                                           asp-action="Index">
-                                            Yönetici Paneli
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <hr class="dropdown-divider" />
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("CalismaSaat") == true ? "active" : "")"
-                                           asp-controller="Admin" asp-action="CalismaSaatleri">
-                                            Doktor Çalışma Saatleri
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("Kurum") == true ? "active" : "")"
-                                           asp-controller="Admin"
-                                           asp-action="Kurumlar">
-                                            Kurum Yönetimi
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("Sube") == true ? "active" : "")"
-                                           asp-controller="Admin"
-                                           asp-action="Subeler">
-                                            Şube Yönetimi
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("Poliklinik") == true ? "active" : "")"
-                                           asp-controller="Admin"
-                                           asp-action="Poliklinikler">
-                                            Poliklinik Yönetimi
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("Doktor") == true ? "active" : "")"
-                                           asp-controller="Admin"
-                                           asp-action="Doktorlar">
-                                            Doktor Yönetimi
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item @(yonetimSayfasinda && mevcutAction?.StartsWith("SaglikPersoneli") == true ? "active" : "")"
-                                           asp-controller="Admin"
-                                           asp-action="SaglikPersonelleri">
-                                            Sağlık Personeli Yönetimi
-                                        </a>
-                                    </li>
-                                </ul>
+                            <li class="nav-item">
+                                <a class="nav-link app-nav-link"
+                                   asp-controller="Calisan"
+                                   asp-action="Randevular">
+                                    Randevularım
+                                </a>
                             </li>
                         }
                         else
@@ -165,11 +108,66 @@
                             <li class="nav-item">
                                 <a class="nav-link app-nav-link"
                                    asp-controller="Home"
-                                   asp-action="Index"
-                                   asp-fragment="poliklinikler">
-                                    Poliklinikler
+                                   asp-action="Index">
+                                    Ana Sayfa
                                 </a>
                             </li>
+
+                            @if (yoneticiMi)
+                            {
+                                <li class="nav-item dropdown">
+                                    <button class="nav-link app-nav-link dropdown-toggle border-0 bg-transparent"
+                                            type="button"
+                                            id="yonetimMenu"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                        Yönetim Panelleri
+                                    </button>
+
+                                    <ul class="dropdown-menu dropdown-menu-end"
+                                        aria-labelledby="yonetimMenu">
+                                        @foreach (var baglanti in yonetimBaglantilari)
+                                        {
+                                            <li>
+                                                <a class="dropdown-item"
+                                                   asp-controller="Admin"
+                                                   asp-action="@baglanti.Item1">
+                                                    @baglanti.Item2
+                                                </a>
+                                            </li>
+
+                                            @if (baglanti.Item1 == "Index")
+                                            {
+                                                <li>
+                                                    <hr class="dropdown-divider" />
+                                                </li>
+                                            }
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link app-nav-link"
+                                       asp-controller="Home"
+                                       asp-action="Index"
+                                       asp-fragment="poliklinikler">
+                                        Poliklinikler
+                                    </a>
+                                </li>
+
+                                @if (hastaMi)
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link app-nav-link"
+                                           asp-controller="Randevu"
+                                           asp-action="Liste">
+                                            Randevularım
+                                        </a>
+                                    </li>
+                                }
+                            }
                         }
 
                         @if (girisYapildi)
@@ -203,7 +201,7 @@
                             </li>
                         }
 
-                        @if (!yoneticiMi)
+                        @if (hastaMi || !girisYapildi)
                         {
                             <li class="nav-item">
                                 <a class="nav-link app-login-link"

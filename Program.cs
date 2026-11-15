@@ -1,4 +1,5 @@
 using HastaneRandevuSistemi.Data;
+using HastaneRandevuSistemi.Filters;
 using HastaneRandevuSistemi.Models;
 using HastaneRandevuSistemi.Services;
 using HastaneRandevuSistemi.Services.Interfaces;
@@ -7,15 +8,31 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<CalisanEkraniFiltresi>();
+});
 
-builder.Services.AddScoped<IRandevuSecimService, RandevuSecimService>();
-builder.Services.AddScoped<IPoliklinikService, PoliklinikService>();
-builder.Services.AddScoped<IDoktorService, DoktorService>();
-builder.Services.AddScoped<ISaglikPersoneliService, SaglikPersoneliService>();
-builder.Services.AddScoped<IKurumService, KurumService>();
-builder.Services.AddScoped<ISubeService, SubeService>();
-builder.Services.AddScoped<IDoktorCalismaSaatiService, DoktorCalismaSaatiService>();
+builder.Services.AddScoped<
+    IRandevuSecimService, RandevuSecimService>();
+
+builder.Services.AddScoped<
+    IPoliklinikService, PoliklinikService>();
+
+builder.Services.AddScoped<
+    IDoktorService, DoktorService>();
+
+builder.Services.AddScoped<
+    ISaglikPersoneliService, SaglikPersoneliService>();
+
+builder.Services.AddScoped<
+    IKurumService, KurumService>();
+
+builder.Services.AddScoped<
+    ISubeService, SubeService>();
+
+builder.Services.AddScoped<
+    IDoktorCalismaSaatiService, DoktorCalismaSaatiService>();
 
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
@@ -71,7 +88,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-// Yerel geliştirme için yönetici hesabı
 var adminUserName = builder.Configuration["Admin:UserName"];
 var adminEmail = builder.Configuration["Admin:Email"];
 var adminPassword = builder.Configuration["Admin:Password"];
@@ -83,14 +99,13 @@ if (!string.IsNullOrWhiteSpace(adminUserName)
     using var scope = app.Services.CreateScope();
 
     var userManager =
-        scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        scope.ServiceProvider
+            .GetRequiredService<UserManager<ApplicationUser>>();
 
     var admin = await userManager.FindByNameAsync(adminUserName);
 
     if (admin is null)
-    {
         admin = await userManager.FindByEmailAsync(adminEmail);
-    }
 
     if (admin is null)
     {

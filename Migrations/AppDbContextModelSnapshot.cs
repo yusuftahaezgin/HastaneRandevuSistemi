@@ -188,6 +188,42 @@ namespace HastaneRandevuSistemi.Migrations
                         });
                 });
 
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.HastaneCalismaSaati", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AcikMi")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("BaslangicDakika")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BitisDakika")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Gun")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SubeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubeId", "Gun")
+                        .IsUnique();
+
+                    b.ToTable("HastaneCalismaSaatleri", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_HastaneCalismaSaatleri_Gun", "\"Gun\" BETWEEN 0 AND 6");
+
+                            t.HasCheckConstraint("CK_HastaneCalismaSaatleri_Saat", "\"BaslangicDakika\" BETWEEN 0 AND 1439 AND \"BitisDakika\" BETWEEN 1 AND 1440 AND \"BitisDakika\" > \"BaslangicDakika\"");
+                        });
+                });
+
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Kurum", b =>
                 {
                     b.Property<int>("Id")
@@ -680,6 +716,11 @@ namespace HastaneRandevuSistemi.Migrations
                 {
                     b.HasBaseType("HastaneRandevuSistemi.Models.Calisan");
 
+                    b.Property<string>("HizmetAdi")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
                     b.Property<decimal?>("RandevuUcreti")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
@@ -699,6 +740,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 1,
                             Soyad = "Kaya",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -708,6 +750,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 2,
                             Soyad = "Yılmaz",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -717,6 +760,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 3,
                             Soyad = "Demir",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -726,6 +770,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 4,
                             Soyad = "Arslan",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -735,6 +780,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 5,
                             Soyad = "Yıldız",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -744,6 +790,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 6,
                             Soyad = "Aydın",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -753,6 +800,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 7,
                             Soyad = "Şahin",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -762,6 +810,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 8,
                             Soyad = "Koç",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -771,6 +820,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 9,
                             Soyad = "Çelik",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -780,6 +830,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 10,
                             Soyad = "Kurt",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -789,6 +840,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 11,
                             Soyad = "Özkan",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         },
                         new
@@ -798,6 +850,7 @@ namespace HastaneRandevuSistemi.Migrations
                             AktifMi = true,
                             PoliklinikId = 12,
                             Soyad = "Aslan",
+                            HizmetAdi = "Doktor muayenesi",
                             Unvan = "Uzm. Dr."
                         });
                 });
@@ -841,6 +894,17 @@ namespace HastaneRandevuSistemi.Migrations
                         .IsRequired();
 
                     b.Navigation("Doktor");
+                });
+
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.HastaneCalismaSaati", b =>
+                {
+                    b.HasOne("HastaneRandevuSistemi.Models.Sube", "Sube")
+                        .WithMany("CalismaSaatleri")
+                        .HasForeignKey("SubeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Sube");
                 });
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.PersonelCalismaSaati", b =>
@@ -976,6 +1040,11 @@ namespace HastaneRandevuSistemi.Migrations
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Poliklinik", b =>
                 {
                     b.Navigation("Calisanlar");
+                });
+
+            modelBuilder.Entity("HastaneRandevuSistemi.Models.Sube", b =>
+                {
+                    b.Navigation("CalismaSaatleri");
                 });
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.SaglikPersoneli", b =>

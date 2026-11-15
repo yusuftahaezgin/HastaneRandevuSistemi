@@ -19,6 +19,7 @@ public class AdminController : Controller
     private readonly ISubeService _subeService;
     private readonly IDoktorCalismaSaatiService _calismaSaatiService;
     private readonly RandevuKayitService _randevuKayitService;
+    private readonly HastaneCalismaService _hastaneCalismaService;
 
     public AdminController(
         IPoliklinikService poliklinikService,
@@ -36,6 +37,7 @@ public class AdminController : Controller
         _subeService = subeService;
         _calismaSaatiService = calismaSaatiService;
         _randevuKayitService = new RandevuKayitService(db);
+        _hastaneCalismaService = new HastaneCalismaService(db);
     }
 
     [HttpGet]
@@ -742,7 +744,42 @@ public class AdminController : Controller
         return RedirectToAction(nameof(CalismaSaatleri));
     }
 
-    // ÜCRETLER, PERSONEL HİZMETLERİ VE RANDEVU ONAYLARI
+    // HASTANE ÇALIŞMA SAATLERİ
+
+    [HttpGet]
+    public async Task<IActionResult> HastaneSaatleri()
+    {
+        return View(await _hastaneCalismaService.ListeAsync());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> HastaneSaatiKaydet(
+        int subeId,
+        int gun,
+        bool acikMi,
+        string baslangic,
+        string bitis)
+    {
+        try
+        {
+            RandevuFormunuKontrolEt();
+
+            await _hastaneCalismaService.KaydetAsync(
+                subeId, gun, acikMi, baslangic, bitis);
+
+            TempData["Basari"] =
+                "Hastanenin çalışma saati güncellendi.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["Hata"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(HastaneSaatleri));
+    }
+
+    // ÜCRET VE HİZMET YÖNETİMİ
 
     [HttpGet]
     public async Task<IActionResult> UcretVeHizmetler()
@@ -750,12 +787,38 @@ public class AdminController : Controller
         return View(await _randevuKayitService.TarifelerAsync());
     }
 
+    // Eski adres, ortak yönetim ekranına yönlenir.
     [HttpGet]
-    public async Task<IActionResult> Randevular()
+    public IActionResult DoktorHizmetleri()
     {
-        var randevular = await _randevuKayitService.ListeAsync();
+        return RedirectToAction(nameof(UcretVeHizmetler));
+    }
 
-        return View("~/Views/Randevu/Liste.cshtml", randevular);
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DoktorHizmetiKaydet(
+        int id,
+        string hizmetAdi,
+        string ucret)
+    {
+        try
+        {
+            RandevuFormunuKontrolEt();
+
+            await _randevuKayitService.DoktorUcretiAsync(
+                id,
+                RandevuKayitService.UcretOku(ucret),
+                hizmetAdi);
+
+            TempData["Basari"] =
+                "Doktorun hizmet adı ve ücreti güncellendi.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["Hata"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(UcretVeHizmetler));
     }
 
     [HttpPost]
@@ -871,6 +934,15 @@ public class AdminController : Controller
         return RedirectToAction(nameof(UcretVeHizmetler));
     }
 
+    // RANDEVU ONAYLARI
+
+    [HttpGet]
+    public async Task<IActionResult> Randevular()
+    {
+        var randevular = await _randevuKayitService.ListeAsync();
+        return View("~/Views/Randevu/Liste.cshtml", randevular);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RandevuKarar(int id, string karar)
@@ -916,8 +988,7 @@ public class AdminController : Controller
         ViewBag.SecilebilirDoktorVar = doktorlar.Count > 0;
     }
 
-    private void CalismaGunleriniHazirla(
-        DayOfWeek? seciliGun = null)
+    private void CalismaGunleriniHazirla(DayOfWeek? seciliGun = null)
     {
         var gunler = new[]
         {
@@ -974,8 +1045,8 @@ public class AdminController : Controller
 
         var secenekler = subeler
             .Where(s =>
-                (s.AktifMi && s.Kurum.AktifMi) ||
-                s.Id == mevcutSubeId)
+                (s.AktifMi && s.Kurum.AktifMi)
+                || s.Id == mevcutSubeId)
             .OrderBy(s => s.Kurum.Ad)
             .ThenBy(s => s.Ad)
             .Select(s => new SelectListItem
@@ -1000,8 +1071,8 @@ public class AdminController : Controller
 
         ViewBag.Poliklinikler = poliklinikler
             .Where(p =>
-                YeniAtamayaUygunMu(p) ||
-                p.Id == mevcutPoliklinikId)
+                YeniAtamayaUygunMu(p)
+                || p.Id == mevcutPoliklinikId)
             .OrderBy(p => p.Sube?.Ad)
             .ThenBy(p => p.Ad)
             .Select(p => new SelectListItem
@@ -1015,11 +1086,11 @@ public class AdminController : Controller
 
     private static bool YeniAtamayaUygunMu(Poliklinik poliklinik)
     {
-        return poliklinik.AktifMi &&
-               poliklinik.Sube is not null &&
-               poliklinik.Sube.AktifMi &&
-               poliklinik.Sube.Kurum is not null &&
-               poliklinik.Sube.Kurum.AktifMi;
+        return poliklinik.AktifMi
+            && poliklinik.Sube is not null
+            && poliklinik.Sube.AktifMi
+            && poliklinik.Sube.Kurum is not null
+            && poliklinik.Sube.Kurum.AktifMi;
     }
 
     private static string PoliklinikSecenekMetni(Poliklinik poliklinik)

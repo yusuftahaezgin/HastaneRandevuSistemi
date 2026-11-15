@@ -44,8 +44,6 @@ public class RandevuKayitService
         return ucret;
     }
 
-    // Randevu ve tarife yazma işlemleri sırayla yürür.
-    // Böylece eşzamanlı iki istek aynı saati alamaz.
     private Task KilitAsync() =>
         db.Database.ExecuteSqlRawAsync(
             "SELECT pg_advisory_xact_lock(74126, 1)");
@@ -119,7 +117,10 @@ public class RandevuKayitService
         };
     }
 
-    public async Task DoktorUcretiAsync(int id, decimal ucret)
+    public async Task DoktorUcretiAsync(
+        int id,
+        decimal ucret,
+        string? hizmetAdi = null)
     {
         using var tx = await db.Database.BeginTransactionAsync(
             IsolationLevel.ReadCommitted);
@@ -129,6 +130,9 @@ public class RandevuKayitService
         var doktor = await db.Doktorlar
             .SingleOrDefaultAsync(x => x.Id == id)
             ?? throw new ArgumentException("Doktor bulunamadı.");
+
+        if (hizmetAdi is not null)
+            doktor.HizmetAdiAyarla(hizmetAdi);
 
         doktor.UcretAyarla(ucret);
 
@@ -163,11 +167,10 @@ public class RandevuKayitService
             .Select(x => x.Ad)
             .ToListAsync();
 
-        if (adlar.Any(x =>
-                string.Equals(
-                    x,
-                    ad?.Trim(),
-                    StringComparison.OrdinalIgnoreCase)))
+        if (adlar.Any(x => string.Equals(
+                x,
+                ad?.Trim(),
+                StringComparison.OrdinalIgnoreCase)))
         {
             throw new ArgumentException(
                 "Bu personelde aynı isimde hizmet zaten var.");
@@ -182,8 +185,7 @@ public class RandevuKayitService
         {
             var hizmet = await db.Set<PersonelHizmeti>()
                 .SingleOrDefaultAsync(x => x.Id == id)
-                ?? throw new ArgumentException(
-                    "Hizmet bulunamadı.");
+                ?? throw new ArgumentException("Hizmet bulunamadı.");
 
             if (hizmet.PersonelId != personelId)
             {
@@ -250,7 +252,8 @@ public class RandevuKayitService
             ?? throw new ArgumentException(
                 "Çalışma saati bulunamadı.");
 
-        var bugun = DateOnly.FromDateTime(Simdi);
+        var simdi = Simdi;
+        var bugun = DateOnly.FromDateTime(simdi);
 
         var randevular = await AcikRandevular()
             .Where(x =>
@@ -259,13 +262,13 @@ public class RandevuKayitService
             .ToListAsync();
 
         if (randevular.Any(x =>
-                x.Tarih.ToDateTime(x.Baslangic) > Simdi
+                x.Tarih.ToDateTime(x.Bitis) > simdi
                 && x.Tarih.DayOfWeek == kayit.Gun
                 && x.Baslangic < kayit.Bitis
                 && kayit.Baslangic < x.Bitis))
         {
             throw new ArgumentException(
-                "Bu çalışma aralığında gelecek randevu var. " +
+                "Bu çalışma aralığında mevcut veya gelecek randevu var. " +
                 "Önce ilgili randevuyu iptal edin veya reddedin.");
         }
 
@@ -280,7 +283,28 @@ public class RandevuKayitService
     {
         if (model.SeciliDoktorId is null
             || model.SeciliTarih is null)
+        {
             return;
+        }
+
+        var subeId = model.SeciliDoktor?.Poliklinik.SubeId;
+
+        if (subeId is null)
+        {
+            model.Saatler.Clear();
+            return;
+        }
+
+        var hastaneProgrami = await new HastaneCalismaService(db)
+            .GunAsync(
+                subeId.Value,
+                model.SeciliTarih.Value.DayOfWeek);
+
+        if (hastaneProgrami is null || !hastaneProgrami.AcikMi)
+        {
+            model.Saatler.Clear();
+            return;
+        }
 
         var dolu = await AcikRandevular()
             .AsNoTracking()
@@ -291,9 +315,12 @@ public class RandevuKayitService
             .ToListAsync();
 
         model.Saatler = model.Saatler
-            .Where(s => !dolu.Any(x =>
-                x.Baslangic < s.BitisSaati
-                && s.BaslangicSaati < x.Bitis))
+            .Where(s =>
+                hastaneProgrami.Kapsar(
+                    s.BaslangicSaati, s.BitisSaati)
+                && !dolu.Any(x =>
+                    x.Baslangic < s.BitisSaati
+                    && s.BaslangicSaati < x.Bitis))
             .ToList();
     }
 
@@ -336,6 +363,17 @@ public class RandevuKayitService
 
         model.SeciliHizmet = hizmet;
 
+        var subeId = hizmet.Personel.Poliklinik.SubeId;
+
+        if (subeId is null)
+            return model;
+
+        var hastaneProgrami = await new HastaneCalismaService(db)
+            .GunAsync(subeId.Value, tarih.DayOfWeek);
+
+        if (hastaneProgrami is null || !hastaneProgrami.AcikMi)
+            return model;
+
         var programlar = await db.Set<PersonelCalismaSaati>()
             .AsNoTracking()
             .Where(x =>
@@ -356,10 +394,9 @@ public class RandevuKayitService
 
         foreach (var program in programlar)
         {
-            for (
-                var saat = program.Baslangic.ToTimeSpan();
-                saat + sure <= program.Bitis.ToTimeSpan();
-                saat += sure)
+            for (var saat = program.Baslangic.ToTimeSpan();
+                 saat + sure <= program.Bitis.ToTimeSpan();
+                 saat += sure)
             {
                 var baslangic = TimeOnly.FromTimeSpan(saat);
                 var bitis = TimeOnly.FromTimeSpan(saat + sure);
@@ -367,10 +404,15 @@ public class RandevuKayitService
                 if (tarih.ToDateTime(baslangic) <= simdi)
                     continue;
 
+                if (!hastaneProgrami.Kapsar(baslangic, bitis))
+                    continue;
+
                 if (dolu.Any(x =>
                         x.Baslangic < bitis
                         && baslangic < x.Bitis))
+                {
                     continue;
+                }
 
                 model.Saatler.Add(baslangic);
             }
@@ -397,7 +439,6 @@ public class RandevuKayitService
 
         await KilitAsync();
 
-        // Mevcut doktor çalışma programı servisiyle aynı kilit.
         await db.Database.ExecuteSqlInterpolatedAsync(
             $"SELECT pg_advisory_xact_lock(74125, {doktorId})");
 
@@ -414,7 +455,6 @@ public class RandevuKayitService
                 "Doktorun randevu ücreti henüz tanımlanmamış.");
         }
 
-        // Daha önce tamamladığımız saat üretimini kullanıyoruz.
         var model = await new RandevuSecimService(db)
             .HazirlaAsync(
                 null,
@@ -445,7 +485,7 @@ public class RandevuKayitService
             saat,
             secilen.RandevuSuresiDakika,
             doktor.RandevuUcreti.Value,
-            "Doktor muayenesi"));
+            doktor.HizmetAdi));
 
         await db.SaveChangesAsync();
         await tx.CommitAsync();
@@ -519,8 +559,7 @@ public class RandevuKayitService
         var randevu = await db.Set<Randevu>()
             .SingleOrDefaultAsync(x =>
                 x.Id == id && x.HastaId == hastaId)
-            ?? throw new ArgumentException(
-                "Randevu bulunamadı.");
+            ?? throw new ArgumentException("Randevu bulunamadı.");
 
         if (randevu.Tarih.ToDateTime(randevu.Baslangic) <= Simdi)
         {
@@ -543,8 +582,7 @@ public class RandevuKayitService
 
         var randevu = await db.Set<Randevu>()
             .SingleOrDefaultAsync(x => x.Id == id)
-            ?? throw new ArgumentException(
-                "Randevu bulunamadı.");
+            ?? throw new ArgumentException("Randevu bulunamadı.");
 
         if (randevu.Tarih.ToDateTime(randevu.Baslangic) <= Simdi)
         {
@@ -573,6 +611,21 @@ public class RandevuKayitService
                     throw new ArgumentException(
                         "Çalışanın polikliniği değişmiş. " +
                         "Bu randevu onaylanamaz.");
+                }
+
+                var subeId = calisan.Poliklinik.SubeId
+                    ?? throw new ArgumentException(
+                        "Çalışanın hastanesi bulunamadı.");
+
+                var hastaneProgrami = await new HastaneCalismaService(db)
+                    .GunAsync(subeId, randevu.Tarih.DayOfWeek);
+
+                if (hastaneProgrami is null
+                    || !hastaneProgrami.Kapsar(
+                        randevu.Baslangic, randevu.Bitis))
+                {
+                    throw new ArgumentException(
+                        "Randevu hastanenin güncel çalışma saatleri dışında.");
                 }
 
                 bool uygun;

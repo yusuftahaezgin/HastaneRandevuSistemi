@@ -27,11 +27,13 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
     public Task<List<DoktorCalismaSaati>> ListeleAsync(
         int? doktorId = null) =>
         Sorgu()
-            .Where(x => doktorId == null || x.DoktorId == doktorId)
+            .Where(x =>
+                doktorId == null || x.DoktorId == doktorId)
             .OrderBy(x => x.Doktor.Ad)
             .ThenBy(x => x.Doktor.Soyad)
             .ThenBy(x => x.DoktorId)
-            .ThenBy(x => x.Gun == DayOfWeek.Sunday ? 7 : (int)x.Gun)
+            .ThenBy(x =>
+                x.Gun == DayOfWeek.Sunday ? 7 : (int)x.Gun)
             .ThenBy(x => x.BaslangicSaati)
             .ToListAsync();
 
@@ -60,7 +62,8 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
         db.Database.ExecuteSqlInterpolatedAsync(
             $"SELECT pg_advisory_xact_lock(74125, {doktorId})");
 
-    private static void Dogrula(DoktorCalismaSaatiFormViewModel model)
+    private static void Dogrula(
+        DoktorCalismaSaatiFormViewModel model)
     {
         var hatalar = new List<ValidationResult>();
 
@@ -71,7 +74,9 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
                 true))
         {
             throw new ArgumentException(
-                string.Join(" ", hatalar.Select(x => x.ErrorMessage)));
+                string.Join(
+                    " ",
+                    hatalar.Select(x => x.ErrorMessage)));
         }
     }
 
@@ -83,7 +88,8 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
                 .ThenInclude(x => x.Sube)
                     .ThenInclude(x => x!.Kurum)
             .SingleOrDefaultAsync(x => x.Id == id)
-            ?? throw new ArgumentException("Doktor bulunamadı.");
+            ?? throw new ArgumentException(
+                "Doktor bulunamadı.");
 
         if (aktif
             && (!doktor.AktifMi
@@ -98,7 +104,8 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
         }
     }
 
-    private async Task CakismaAsync(DoktorCalismaSaati kayit)
+    private async Task CakismaAsync(
+        DoktorCalismaSaati kayit)
     {
         if (kayit.AktifMi
             && await db.DoktorCalismaSaatleri.AnyAsync(x =>
@@ -115,7 +122,8 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
         }
     }
 
-    private async Task RandevulariKoruAsync(DoktorCalismaSaati yeni)
+    private async Task RandevulariKoruAsync(
+        DoktorCalismaSaati yeni)
     {
         var simdi = RandevuKayitService.Simdi;
         var bugun = DateOnly.FromDateTime(simdi);
@@ -129,7 +137,9 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
             .ToListAsync();
 
         if (yeni.AktifMi)
+        {
             programlar.Add(yeni);
+        }
 
         var randevular = await db.Set<Randevu>()
             .AsNoTracking()
@@ -140,8 +150,11 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
                     || x.Durum == RandevuDurumu.Onaylandi))
             .ToListAsync();
 
-        var disaridaKalanVar = randevular.Any(r =>
-            r.Tarih.ToDateTime(r.Baslangic) > simdi
+        // Henüz bitmemiş randevuları korur.
+        // Böylece başlamış ancak devam eden randevular da
+        // çalışma programının dışında bırakılamaz.
+        bool disaridaKalanVar = randevular.Any(r =>
+            r.Tarih.ToDateTime(r.Bitis) > simdi
             && !programlar.Any(p =>
                 p.Gun == r.Tarih.DayOfWeek
                 && p.BaslangicSaati <= r.Baslangic
@@ -150,13 +163,16 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
         if (disaridaKalanVar)
         {
             throw new ArgumentException(
-                "Bu değişiklik gelecek randevuları çalışma programı " +
-                "dışında bırakıyor. Önce ilgili randevuları iptal edin " +
-                "veya reddedin.");
+                "Bu değişiklik, onay bekleyen veya onaylanmış " +
+                "ve henüz bitmemiş randevuları çalışma programı " +
+                "dışında bırakıyor. Gelecek randevular için önce " +
+                "uygun iptal veya ret işlemini yapın; devam eden " +
+                "randevuların bitmesini bekleyin.");
         }
     }
 
-    public async Task EkleAsync(DoktorCalismaSaatiFormViewModel model)
+    public async Task EkleAsync(
+        DoktorCalismaSaatiFormViewModel model)
     {
         Dogrula(model);
 
@@ -172,7 +188,10 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
             IsolationLevel.ReadCommitted);
 
         await KilitleAsync(kayit.DoktorId);
-        await DoktorKontrolAsync(kayit.DoktorId, kayit.AktifMi);
+        await DoktorKontrolAsync(
+            kayit.DoktorId,
+            kayit.AktifMi);
+
         await CakismaAsync(kayit);
 
         db.Add(kayit);
@@ -192,7 +211,9 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
             .SingleOrDefaultAsync();
 
         if (doktorId is null)
+        {
             return false;
+        }
 
         if (doktorId != model.DoktorId)
         {
@@ -209,9 +230,13 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
             .SingleOrDefaultAsync(x => x.Id == model.Id);
 
         if (kayit is null)
+        {
             return false;
+        }
 
-        await DoktorKontrolAsync(kayit.DoktorId, model.AktifMi);
+        await DoktorKontrolAsync(
+            kayit.DoktorId,
+            model.AktifMi);
 
         kayit.BilgileriGuncelle(
             model.Gun!.Value,
@@ -238,7 +263,9 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
             .SingleOrDefaultAsync();
 
         if (doktorId is null)
+        {
             return false;
+        }
 
         using var tx = await db.Database.BeginTransactionAsync(
             IsolationLevel.ReadCommitted);
@@ -249,11 +276,16 @@ public class DoktorCalismaSaatiService : IDoktorCalismaSaatiService
             .SingleOrDefaultAsync(x => x.Id == id);
 
         if (kayit is null)
+        {
             return false;
+        }
 
         kayit.DurumDegistir();
 
-        await DoktorKontrolAsync(kayit.DoktorId, kayit.AktifMi);
+        await DoktorKontrolAsync(
+            kayit.DoktorId,
+            kayit.AktifMi);
+
         await CakismaAsync(kayit);
         await RandevulariKoruAsync(kayit);
 

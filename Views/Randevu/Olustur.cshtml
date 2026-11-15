@@ -1,10 +1,9 @@
-@model RandevuSecimViewModel
+@model HastaneRandevuSistemi.Models.RandevuSecimViewModel
 @using System.Globalization
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     ViewData["Title"] = "Randevu Al";
-
     var tr = CultureInfo.GetCultureInfo("tr-TR");
 
     var kurum = Model.Kurumlar
@@ -23,11 +22,15 @@
         <h1>Randevu Al</h1>
         <p>Kurum, hastane, poliklinik ve doktor seçin.</p>
 
-        <a asp-action="Hizmet" class="btn btn-outline-primary">
+        <a asp-controller="Randevu"
+           asp-action="Hizmet"
+           class="btn btn-outline-primary">
             Sağlık Personeli Hizmetleri
         </a>
 
-        <a asp-action="Liste" class="btn btn-outline-secondary">
+        <a asp-controller="Randevu"
+           asp-action="Liste"
+           class="btn btn-outline-secondary">
             Randevularım
         </a>
     </div>
@@ -38,8 +41,7 @@
     }
 
     <div asp-validation-summary="All"
-         class="text-danger mb-3">
-    </div>
+         class="text-danger mb-3"></div>
 
     <div class="booking-panel">
         @if (Model.Kurumlar.Count == 0)
@@ -52,7 +54,10 @@
         {
             <div class="row g-4">
                 <div class="col-lg-4">
-                    <form asp-action="Olustur" method="get">
+                    <form asp-controller="Randevu"
+                          asp-action="Olustur"
+                          method="get">
+
                         <label for="kurumId" class="form-label">
                             1. Kurum
                         </label>
@@ -85,7 +90,10 @@
                         }
                         else
                         {
-                            <form asp-action="Olustur" method="get">
+                            <form asp-controller="Randevu"
+                                  asp-action="Olustur"
+                                  method="get">
+
                                 <input type="hidden"
                                        name="kurumId"
                                        value="@Model.SeciliKurumId" />
@@ -124,7 +132,10 @@
                         }
                         else
                         {
-                            <form asp-action="Olustur" method="get">
+                            <form asp-controller="Randevu"
+                                  asp-action="Olustur"
+                                  method="get">
+
                                 <input type="hidden"
                                        name="kurumId"
                                        value="@Model.SeciliKurumId" />
@@ -200,6 +211,11 @@
                             <p>@sube?.Ad</p>
 
                             <p>
+                                <strong>Hizmet:</strong>
+                                @d.HizmetAdi
+                            </p>
+
+                            <p>
                                 <strong>
                                     @(d.RandevuUcreti.HasValue
                                         ? d.RandevuUcreti.Value.ToString("N2", tr) + " TL"
@@ -207,7 +223,8 @@
                                 </strong>
                             </p>
 
-                            <a asp-action="Olustur"
+                            <a asp-controller="Randevu"
+                               asp-action="Olustur"
                                asp-route-kurumId="@Model.SeciliKurumId"
                                asp-route-subeId="@Model.SeciliSubeId"
                                asp-route-poliklinikId="@Model.SeciliPoliklinikId"
@@ -231,7 +248,16 @@
 
             <p>@kurum?.Ad / @sube?.Ad / @poliklinik?.Ad</p>
 
-            <form asp-action="Olustur" method="get" novalidate>
+            <p>
+                <strong>Seçilen hizmet:</strong>
+                @doktor.HizmetAdi
+            </p>
+
+            <form asp-controller="Randevu"
+                  asp-action="Olustur"
+                  method="get"
+                  novalidate>
+
                 <input type="hidden"
                        name="kurumId"
                        value="@Model.SeciliKurumId" />
@@ -288,7 +314,7 @@
 
                 <p>
                     <strong>
-                        Muayene ücreti:
+                        Hizmet ücreti:
                         @doktor.RandevuUcreti.Value.ToString("N2", tr) TL
                     </strong>
                     Randevu talebi yönetici onayına gönderilir.
@@ -304,7 +330,9 @@
                 else if (Model.Saatler.Count == 0)
                 {
                     <div class="alert alert-info">
-                        Uygun saat kalmadı. Başka tarih seçebilirsiniz.
+                        Hastane ve doktor çalışma saatleri ile mevcut
+                        randevular dikkate alındığında uygun saat bulunmuyor.
+                        Başka tarih seçebilirsiniz.
                     </div>
                 }
                 else
@@ -313,7 +341,8 @@
                         @foreach (var s in Model.Saatler)
                         {
                             <div class="col-sm-6 col-xl-3">
-                                <form asp-action="DoktorKaydet"
+                                <form asp-controller="Randevu"
+                                      asp-action="DoktorKaydet"
                                       method="post"
                                       class="border rounded p-3 bg-white text-center h-100">
 
@@ -347,15 +376,14 @@
                                         @s.BitisSaati.ToString("HH:mm")
                                     </strong>
 
-                                    <div>
-                                        @s.RandevuSuresiDakika dakika
-                                    </div>
+                                    <div>@s.RandevuSuresiDakika dakika</div>
 
                                     <div>
                                         @doktor.RandevuUcreti.Value.ToString("N2", tr) TL
                                     </div>
 
-                                    <button class="btn btn-primary btn-sm mt-2">
+                                    <button type="submit"
+                                            class="btn btn-primary btn-sm mt-2">
                                         Randevu Talebi Oluştur
                                     </button>
                                 </form>

@@ -16,6 +16,9 @@ public class Sube
 
     public Kurum Kurum { get; private set; } = null!;
 
+    public ICollection<HastaneCalismaSaati> CalismaSaatleri
+        { get; private set; } = new List<HastaneCalismaSaati>();
+
     private Sube()
     {
     }
@@ -28,14 +31,15 @@ public class Sube
         bool aktifMi = true)
     {
         if (kurumId <= 0)
-        {
             throw new ArgumentException("Geçerli bir kurum seçilmelidir.");
-        }
 
         BilgileriGuncelle(ad, adres, telefon);
 
         KurumId = kurumId;
         AktiflikAyarla(aktifMi);
+
+        foreach (var gun in Enum.GetValues<DayOfWeek>())
+            CalismaSaatleri.Add(new HastaneCalismaSaati(gun));
     }
 
     public void BilgileriGuncelle(
@@ -48,32 +52,22 @@ public class Sube
         var temizTelefon = telefon?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(temizAd))
-        {
             throw new ArgumentException("Şube adı boş olamaz.");
-        }
 
         if (temizAd.Length > 150)
-        {
             throw new ArgumentException(
                 "Şube adı en fazla 150 karakter olabilir.");
-        }
 
         if (string.IsNullOrWhiteSpace(temizAdres))
-        {
             throw new ArgumentException("Şube adresi boş olamaz.");
-        }
 
         if (temizAdres.Length > 400)
-        {
             throw new ArgumentException(
                 "Adres en fazla 400 karakter olabilir.");
-        }
 
         if (temizTelefon.Length > 30)
-        {
             throw new ArgumentException(
                 "Telefon en fazla 30 karakter olabilir.");
-        }
 
         Ad = temizAd;
         Adres = temizAdres;

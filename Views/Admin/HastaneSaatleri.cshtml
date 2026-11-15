@@ -1,0 +1,158 @@
+@model List<HastaneRandevuSistemi.Models.Sube>
+@using HastaneRandevuSistemi.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Hastane Çalışma Saatleri";
+    var tr = CultureInfo.GetCultureInfo("tr-TR");
+}
+
+<div class="py-5">
+    <div class="d-flex justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+            <h1>Hastane Çalışma Saatleri</h1>
+            <p class="text-muted">
+                Açık günleri ve saatleri yönetin.
+                00:00–24:00 tam gün açık anlamına gelir.
+                Saatler Türkiye saatine göredir.
+            </p>
+        </div>
+
+        <div>
+            <a asp-controller="Admin"
+               asp-action="Index"
+               class="btn btn-outline-secondary">
+                Yönetici Paneline Dön
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Basari"] is string basari)
+    {
+        <div class="alert alert-success">@basari</div>
+    }
+
+    @if (TempData["Hata"] is string hata)
+    {
+        <div class="alert alert-danger">@hata</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">Henüz hastane eklenmemiş.</div>
+    }
+
+    @foreach (var sube in Model)
+    {
+        <section class="card mb-4">
+            <div class="card-header">
+                <strong>@sube.Ad</strong>
+                <span class="text-muted"> / @sube.Kurum.Ad</span>
+
+                @if (!sube.AktifMi)
+                {
+                    <span class="badge bg-secondary ms-2">
+                        Hastane pasif
+                    </span>
+                }
+            </div>
+
+            <div class="card-body">
+                @if (sube.CalismaSaatleri.Count != 7)
+                {
+                    <div class="alert alert-warning">
+                        Haftalık program eksik.
+                        Migration işleminin tamamlandığını kontrol edin.
+                    </div>
+                }
+
+                @foreach (var saat in sube.CalismaSaatleri
+                    .OrderBy(x => ((int)x.Gun + 6) % 7))
+                {
+                    <form asp-controller="Admin"
+                          asp-action="HastaneSaatiKaydet"
+                          method="post"
+                          class="row g-3 align-items-end border-bottom pb-3 mb-3">
+
+                        <input type="hidden"
+                               name="subeId"
+                               value="@sube.Id" />
+
+                        <input type="hidden"
+                               name="gun"
+                               value="@((int)saat.Gun)" />
+
+                        <div class="col-md-2">
+                            <strong>
+                                @tr.DateTimeFormat.GetDayName(saat.Gun)
+                            </strong>
+                        </div>
+
+                        <div class="col-md-2">
+                            <div class="form-check">
+                                <input id="acik-@saat.Id"
+                                       type="checkbox"
+                                       name="acikMi"
+                                       value="true"
+                                       checked="@saat.AcikMi"
+                                       class="form-check-input" />
+
+                                <label for="acik-@saat.Id"
+                                       class="form-check-label">
+                                    Açık
+                                </label>
+                            </div>
+
+                            <input type="hidden"
+                                   name="acikMi"
+                                   value="false" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="bas-@saat.Id"
+                                   class="form-label">
+                                Açılış
+                            </label>
+
+                            <input id="bas-@saat.Id"
+                                   name="baslangic"
+                                   value="@HastaneCalismaSaati.SaatMetni(saat.BaslangicDakika)"
+                                   class="form-control"
+                                   placeholder="00:00"
+                                   maxlength="5"
+                                   required />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="bit-@saat.Id"
+                                   class="form-label">
+                                Kapanış
+                            </label>
+
+                            <input id="bit-@saat.Id"
+                                   name="bitis"
+                                   value="@HastaneCalismaSaati.SaatMetni(saat.BitisDakika)"
+                                   class="form-control"
+                                   placeholder="24:00"
+                                   maxlength="5"
+                                   required />
+                        </div>
+
+                        <div class="col-md-2">
+                            <button type="submit"
+                                    class="btn btn-primary w-100">
+                                Kaydet
+                            </button>
+                        </div>
+                    </form>
+                }
+
+                <p class="text-muted mb-0">
+                    Kapalı gün için “Açık” işaretini kaldırın.
+                    Randevu saatleri ayrıca doktor veya personelin
+                    çalışma programına göre belirlenir.
+                </p>
+            </div>
+        </section>
+    }
+</div>

@@ -1,0 +1,88 @@
+@model List<HastaneRandevuSistemi.Models.Randevu>
+@using HastaneRandevuSistemi.Services
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Randevularım";
+    var tr = CultureInfo.GetCultureInfo("tr-TR");
+}
+
+<div class="py-5">
+    <h1>Randevularım</h1>
+
+    @if (ViewBag.CalisanAdi is string calisanAdi)
+    {
+        <p class="text-muted">
+            @calisanAdi — size alınan randevular
+        </p>
+    }
+
+    @if (ViewBag.Uyari is string uyari)
+    {
+        <div class="alert alert-warning">@uyari</div>
+    }
+    else if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            Henüz size alınmış bir randevu bulunmuyor.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Tarih / Saat</th>
+                        <th>Hasta</th>
+                        <th>Hastane / Poliklinik</th>
+                        <th>Hizmet / Süre</th>
+                        <th>Ücret</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var randevu in Model)
+                    {
+                        <tr>
+                            <td>
+                                @randevu.Tarih.ToString("dd.MM.yyyy")
+                                <br />
+                                @randevu.Baslangic.ToString("HH:mm")
+                                –
+                                @randevu.Bitis.ToString("HH:mm")
+                            </td>
+
+                            <td>
+                                @randevu.Hasta.Ad @randevu.Hasta.Soyad
+                            </td>
+
+                            <td>
+                                @randevu.HastaneAdi
+                                <br />
+                                <span class="text-muted">
+                                    @randevu.PoliklinikAdi
+                                </span>
+                            </td>
+
+                            <td>
+                                @randevu.IslemAdi
+                                <br />
+                                @randevu.SureDakika dakika
+                            </td>
+
+                            <td>
+                                @randevu.Ucret.ToString("N2", tr) TL
+                            </td>
+
+                            <td>
+                                @RandevuKayitService.DurumMetni(randevu.Durum)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

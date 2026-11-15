@@ -31,6 +31,26 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<HastaneCalismaSaati>(entity =>
+        {
+            entity.ToTable("HastaneCalismaSaatleri", table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_HastaneCalismaSaatleri_Gun",
+                    "\"Gun\" BETWEEN 0 AND 6");
+
+                table.HasCheckConstraint(
+                    "CK_HastaneCalismaSaatleri_Saat",
+                    "\"BaslangicDakika\" BETWEEN 0 AND 1439 " +
+                    "AND \"BitisDakika\" BETWEEN 1 AND 1440 " +
+                    "AND \"BitisDakika\" > \"BaslangicDakika\"");
+            });
+
+            entity.HasOne(x => x.Sube)
+                .WithMany(x => x.CalismaSaatleri)
+                .HasForeignKey(x => x.SubeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         // ---------------- KULLANICI ROLLERİ ----------------
 
