@@ -274,7 +274,7 @@ namespace HastaneRandevuSistemi.Migrations
 
                     b.HasIndex("PersonelId");
 
-                    b.ToTable("PersonelCalismaSaatleri");
+                    b.ToTable("PersonelCalismaSaatleri", (string)null);
                 });
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.PersonelHizmeti", b =>
@@ -307,7 +307,7 @@ namespace HastaneRandevuSistemi.Migrations
 
                     b.HasIndex("PersonelId");
 
-                    b.ToTable("PersonelHizmetleri");
+                    b.ToTable("PersonelHizmetleri", (string)null);
                 });
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Poliklinik", b =>
@@ -511,7 +511,7 @@ namespace HastaneRandevuSistemi.Migrations
 
                     b.HasIndex("HastaId", "Tarih");
 
-                    b.ToTable("Randevular");
+                    b.ToTable("Randevular", (string)null);
                 });
 
             modelBuilder.Entity("HastaneRandevuSistemi.Models.Sube", b =>

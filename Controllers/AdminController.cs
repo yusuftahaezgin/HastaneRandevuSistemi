@@ -6,6 +6,8 @@ using HastaneRandevuSistemi.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Identity;
+
 
 namespace HastaneRandevuSistemi.Controllers;
 
@@ -20,6 +22,9 @@ public class AdminController : Controller
     private readonly IDoktorCalismaSaatiService _calismaSaatiService;
     private readonly RandevuKayitService _randevuKayitService;
     private readonly HastaneCalismaService _hastaneCalismaService;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+
 
     public AdminController(
         IPoliklinikService poliklinikService,
@@ -28,7 +33,8 @@ public class AdminController : Controller
         IKurumService kurumService,
         ISubeService subeService,
         IDoktorCalismaSaatiService calismaSaatiService,
-        AppDbContext db)
+        AppDbContext db,
+        UserManager<ApplicationUser> userManager)
     {
         _poliklinikService = poliklinikService;
         _doktorService = doktorService;
@@ -38,7 +44,9 @@ public class AdminController : Controller
         _calismaSaatiService = calismaSaatiService;
         _randevuKayitService = new RandevuKayitService(db);
         _hastaneCalismaService = new HastaneCalismaService(db);
+        _userManager = userManager;
     }
+
 
     [HttpGet]
     public IActionResult Index()
@@ -489,6 +497,121 @@ public class AdminController : Controller
 
         TempData["Basari"] = "Doktor bilgileri güncellendi.";
         return RedirectToAction(nameof(Doktorlar));
+    }
+
+    // DOKTOR PAROLA SIFIRLAMA
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DoktorParolaSifirla(
+        int doktorId,
+        string yeniParola,
+        string yeniParolaTekrar)
+    {
+        var doktor = await _doktorService.GetirAsync(doktorId);
+
+        if (doktor is null)
+            return NotFound();
+
+        if (string.IsNullOrWhiteSpace(doktor.KullaniciId))
+        {
+            TempData["Hata"] =
+                "Bu doktora bağlı bir giriş hesabı yok.";
+
+            return RedirectToAction(
+                nameof(DoktorDuzenle),
+                new { id = doktorId });
+        }
+
+        if (string.IsNullOrWhiteSpace(yeniParola))
+        {
+            TempData["Hata"] = "Yeni parola boş olamaz.";
+
+            return RedirectToAction(
+                nameof(DoktorDuzenle),
+                new { id = doktorId });
+        }
+
+        if (yeniParola != yeniParolaTekrar)
+        {
+            TempData["Hata"] = "Yeni parolalar eşleşmiyor.";
+
+            return RedirectToAction(
+                nameof(DoktorDuzenle),
+                new { id = doktorId });
+        }
+
+        var kullanici = await _userManager.FindByIdAsync(
+            doktor.KullaniciId);
+
+        if (kullanici is null)
+        {
+            TempData["Hata"] =
+                "Doktorun giriş hesabı bulunamadı.";
+
+            return RedirectToAction(
+                nameof(DoktorDuzenle),
+                new { id = doktorId });
+        }
+
+        // Başka bir role ait hesabın parolası
+        // doktor ekranından değiştirilemesin.
+        if (!await _userManager.IsInRoleAsync(
+            kullanici, "Doktor"))
+        {
+            return Forbid();
+        }
+
+        // ASP.NET Identity parola sıfırlama token'ı.
+        var token =
+            await _userManager.GeneratePasswordResetTokenAsync(
+                kullanici);
+
+        // Eski parolayı bilmeden güvenli sıfırlama.
+        var sonuc = await _userManager.ResetPasswordAsync(
+            kullanici,
+            token,
+            yeniParola);
+
+        if (!sonuc.Succeeded)
+        {
+            TempData["Hata"] = string.Join(
+                " ",
+                sonuc.Errors.Select(e => e.Description));
+
+            return RedirectToAction(
+                nameof(DoktorDuzenle),
+                new { id = doktorId });
+        }
+
+        // Başarısız giriş sayacını sıfırla.
+        var sayacSonucu =
+            await _userManager.ResetAccessFailedCountAsync(
+                kullanici);
+
+        // Hesap kilitlendiyse kilidi kaldır.
+        var kilitSonucu =
+            await _userManager.SetLockoutEndDateAsync(
+                kullanici, null);
+
+        if (!sayacSonucu.Succeeded || !kilitSonucu.Succeeded)
+        {
+            TempData["Hata"] =
+                "Parola yenilendi ancak hesap kilidi " +
+                "tamamen kaldırılamadı. Hesap durumunu " +
+                "kontrol edin.";
+        }
+        else
+        {
+            TempData["Basari"] =
+                $"{doktor.GorunenAdGetir()} için parola " +
+                "başarıyla yenilendi. Yeni parolayla " +
+                "giriş yapılabilir.";
+        }
+
+        return RedirectToAction(
+            nameof(DoktorDuzenle),
+            new { id = doktorId });
     }
 
     [HttpPost]
