@@ -18,5 +18,8 @@ public abstract class Calisan
 
     public ApplicationUser? Kullanici { get; set; }
 
+    public ICollection<Randevu> Randevular { get; set; }
+        = new List<Randevu>();
+
     public abstract string GorunenAdGetir();
 }

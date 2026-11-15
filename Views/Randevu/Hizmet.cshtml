@@ -1,0 +1,152 @@
+@model PersonelRandevuModel
+@using System.Globalization
+@using HastaneRandevuSistemi.Services
+
+@{
+    ViewData["Title"] = "Sağlık Personeli Hizmetleri";
+
+    var tr = CultureInfo.GetCultureInfo("tr-TR");
+    var bugun = DateOnly.FromDateTime(RandevuKayitService.Simdi);
+}
+
+<div class="py-5">
+    <h2>Sağlık Personeli Hizmetleri</h2>
+    <p>Hizmeti, sağlık personelini ve tarihi seçin.</p>
+
+    <a asp-action="Olustur"
+       class="btn btn-outline-primary mb-3">
+        Doktor Randevusu
+    </a>
+
+    <a asp-action="Liste"
+       class="btn btn-outline-secondary mb-3">
+        Randevularım
+    </a>
+
+    @if (TempData["Hata"] is string hata)
+    {
+        <div class="alert alert-danger">@hata</div>
+    }
+
+    <div asp-validation-summary="All"
+         class="text-danger">
+    </div>
+
+    <form asp-action="Hizmet"
+          method="get"
+          class="card p-4 mb-4">
+
+        <label for="hizmet" class="form-label">
+            Hastane / Personel / Hizmet
+        </label>
+
+        <select id="hizmet"
+                name="hizmetId"
+                class="form-select mb-3"
+                required>
+            <option value="">Hizmet seçin</option>
+
+            @foreach (var h in Model.Hizmetler)
+            {
+                <option value="@h.Id"
+                        selected="@(Model.SeciliHizmet?.Id == h.Id)">
+                    @h.Personel.Poliklinik.Sube?.Ad /
+                    @h.Personel.GorunenAdGetir() /
+                    @h.Ad — @h.Ucret.ToString("N2", tr) TL
+                </option>
+            }
+        </select>
+
+        <label for="tarih" class="form-label">Tarih</label>
+
+        <input type="date"
+               id="tarih"
+               name="tarih"
+               value="@Model.Tarih.ToString("yyyy-MM-dd")"
+               min="@bugun.ToString("yyyy-MM-dd")"
+               max="@bugun.AddDays(30).ToString("yyyy-MM-dd")"
+               class="form-control mb-3"
+               required />
+
+        <div>
+            <button class="btn btn-primary">Saatleri Göster</button>
+        </div>
+    </form>
+
+    @if (Model.Hizmetler.Count == 0)
+    {
+        <div class="alert alert-info">
+            Aktif hizmet bulunmuyor.
+        </div>
+    }
+
+    @if (Model.SeciliHizmet is { } hizmet)
+    {
+        <div class="alert alert-primary">
+            <strong>@hizmet.Ad</strong>
+            · @hizmet.SureDakika dakika
+            · @hizmet.Ucret.ToString("N2", tr) TL
+
+            <br />
+
+            @hizmet.Personel.GorunenAdGetir()
+
+            <br />
+
+            @Model.Tarih.ToString("dd MMMM yyyy dddd", tr).
+            Saatler Türkiye saatidir.
+            Talebiniz yönetici onayına gönderilir.
+        </div>
+
+        @if (Model.Saatler.Count == 0)
+        {
+            <div class="alert alert-info">
+                Bu tarihte uygun çalışma veya randevu saati bulunmuyor.
+            </div>
+        }
+
+        <div class="row g-3">
+            @foreach (var s in Model.Saatler)
+            {
+                <div class="col-sm-6 col-lg-3">
+                    <form asp-action="HizmetKaydet"
+                          method="post"
+                          class="card p-3 text-center">
+
+                        <input type="hidden"
+                               name="hizmetId"
+                               value="@hizmet.Id" />
+
+                        <input type="hidden"
+                               name="tarih"
+                               value="@Model.Tarih.ToString("yyyy-MM-dd")" />
+
+                        <input type="hidden"
+                               name="saat"
+                               value="@s.ToString("HH:mm")" />
+
+                        <input type="hidden"
+                               name="ucret"
+                               value="@hizmet.Ucret.ToString(CultureInfo.InvariantCulture)" />
+
+                        <input type="hidden"
+                               name="sure"
+                               value="@hizmet.SureDakika" />
+
+                        <strong>
+                            @s.ToString("HH:mm")
+                            –
+                            @s.AddMinutes(hizmet.SureDakika).ToString("HH:mm")
+                        </strong>
+
+                        <p>@hizmet.Ucret.ToString("N2", tr) TL</p>
+
+                        <button class="btn btn-primary">
+                            Randevu Talebi Oluştur
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,4 +1,7 @@
+using System.Globalization;
+using HastaneRandevuSistemi.Data;
 using HastaneRandevuSistemi.Models;
+using HastaneRandevuSistemi.Services;
 using HastaneRandevuSistemi.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +18,7 @@ public class AdminController : Controller
     private readonly IKurumService _kurumService;
     private readonly ISubeService _subeService;
     private readonly IDoktorCalismaSaatiService _calismaSaatiService;
+    private readonly RandevuKayitService _randevuKayitService;
 
     public AdminController(
         IPoliklinikService poliklinikService,
@@ -22,7 +26,8 @@ public class AdminController : Controller
         ISaglikPersoneliService personelService,
         IKurumService kurumService,
         ISubeService subeService,
-        IDoktorCalismaSaatiService calismaSaatiService)
+        IDoktorCalismaSaatiService calismaSaatiService,
+        AppDbContext db)
     {
         _poliklinikService = poliklinikService;
         _doktorService = doktorService;
@@ -30,6 +35,7 @@ public class AdminController : Controller
         _kurumService = kurumService;
         _subeService = subeService;
         _calismaSaatiService = calismaSaatiService;
+        _randevuKayitService = new RandevuKayitService(db);
     }
 
     [HttpGet]
@@ -43,8 +49,7 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> Kurumlar()
     {
-        var kurumlar = await _kurumService.ListeleAsync();
-        return View(kurumlar);
+        return View(await _kurumService.ListeleAsync());
     }
 
     [HttpGet]
@@ -55,20 +60,15 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> KurumEkle(
-        KurumFormViewModel model)
+    public async Task<IActionResult> KurumEkle(KurumFormViewModel model)
     {
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
         try
         {
             await _kurumService.EkleAsync(
-                model.Ad,
-                model.Aciklama,
-                model.AktifMi);
+                model.Ad, model.Aciklama, model.AktifMi);
         }
         catch (ArgumentException ex)
         {
@@ -86,56 +86,40 @@ public class AdminController : Controller
         var kurum = await _kurumService.GetirAsync(id);
 
         if (kurum is null)
-        {
             return NotFound();
-        }
 
-        var model = new KurumFormViewModel
+        return View(new KurumFormViewModel
         {
             Id = kurum.Id,
             Ad = kurum.Ad,
             Aciklama = kurum.Aciklama,
             AktifMi = kurum.AktifMi
-        };
-
-        return View(model);
+        });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> KurumDuzenle(
-        int id,
-        KurumFormViewModel model)
+        int id, KurumFormViewModel model)
     {
         if (id != model.Id)
-        {
             return BadRequest();
-        }
 
         var kurum = await _kurumService.GetirAsync(id);
 
         if (kurum is null)
-        {
             return NotFound();
-        }
 
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
         try
         {
             var guncellendi = await _kurumService.GuncelleAsync(
-                id,
-                model.Ad,
-                model.Aciklama,
-                model.AktifMi);
+                id, model.Ad, model.Aciklama, model.AktifMi);
 
             if (!guncellendi)
-            {
                 return NotFound();
-            }
         }
         catch (ArgumentException ex)
         {
@@ -151,12 +135,8 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> KurumDurumDegistir(int id)
     {
-        var degisti = await _kurumService.DurumDegistirAsync(id);
-
-        if (!degisti)
-        {
+        if (!await _kurumService.DurumDegistirAsync(id))
             return NotFound();
-        }
 
         TempData["Basari"] = "Kurumun aktiflik durumu güncellendi.";
         return RedirectToAction(nameof(Kurumlar));
@@ -167,8 +147,7 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> Subeler()
     {
-        var subeler = await _subeService.ListeleAsync();
-        return View(subeler);
+        return View(await _subeService.ListeleAsync());
     }
 
     [HttpGet]
@@ -180,8 +159,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SubeEkle(
-        SubeFormViewModel model)
+    public async Task<IActionResult> SubeEkle(SubeFormViewModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -201,7 +179,6 @@ public class AdminController : Controller
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             await KurumListesiniHazirla(model.KurumId);
             return View(model);
         }
@@ -216,11 +193,13 @@ public class AdminController : Controller
         var sube = await _subeService.GetirAsync(id);
 
         if (sube is null)
-        {
             return NotFound();
-        }
 
-        var model = new SubeFormViewModel
+        ViewBag.KurumAdi = sube.Kurum.AktifMi
+            ? sube.Kurum.Ad
+            : $"{sube.Kurum.Ad} (Pasif)";
+
+        return View(new SubeFormViewModel
         {
             Id = sube.Id,
             KurumId = sube.KurumId,
@@ -228,46 +207,31 @@ public class AdminController : Controller
             Adres = sube.Adres,
             Telefon = sube.Telefon,
             AktifMi = sube.AktifMi
-        };
-
-        ViewBag.KurumAdi = sube.Kurum.AktifMi
-            ? sube.Kurum.Ad
-            : $"{sube.Kurum.Ad} (Pasif)";
-
-        return View(model);
+        });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SubeDuzenle(
-        int id,
-        SubeFormViewModel model)
+        int id, SubeFormViewModel model)
     {
         if (id != model.Id)
-        {
             return BadRequest();
-        }
 
         var sube = await _subeService.GetirAsync(id);
 
         if (sube is null)
-        {
             return NotFound();
-        }
 
         if (model.KurumId != sube.KurumId)
-        {
             return BadRequest();
-        }
 
         ViewBag.KurumAdi = sube.Kurum.AktifMi
             ? sube.Kurum.Ad
             : $"{sube.Kurum.Ad} (Pasif)";
 
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
         try
         {
@@ -279,9 +243,7 @@ public class AdminController : Controller
                 model.AktifMi);
 
             if (!guncellendi)
-            {
                 return NotFound();
-            }
         }
         catch (ArgumentException ex)
         {
@@ -297,12 +259,8 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SubeDurumDegistir(int id)
     {
-        var degisti = await _subeService.DurumDegistirAsync(id);
-
-        if (!degisti)
-        {
+        if (!await _subeService.DurumDegistirAsync(id))
             return NotFound();
-        }
 
         TempData["Basari"] = "Şubenin aktiflik durumu güncellendi.";
         return RedirectToAction(nameof(Subeler));
@@ -313,8 +271,7 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> Poliklinikler()
     {
-        var poliklinikler = await _poliklinikService.ListeleAsync();
-        return View(poliklinikler);
+        return View(await _poliklinikService.ListeleAsync());
     }
 
     [HttpGet]
@@ -346,7 +303,6 @@ public class AdminController : Controller
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             await PoliklinikIcinSubeListesiniHazirla(model.SubeId);
             return View(model);
         }
@@ -361,9 +317,7 @@ public class AdminController : Controller
         var poliklinik = await _poliklinikService.GetirAsync(id);
 
         if (poliklinik is null)
-        {
             return NotFound();
-        }
 
         var model = new PoliklinikFormViewModel
         {
@@ -375,8 +329,7 @@ public class AdminController : Controller
         };
 
         await PoliklinikIcinSubeListesiniHazirla(
-            model.SubeId,
-            poliklinik.SubeId);
+            model.SubeId, poliklinik.SubeId);
 
         return View(model);
     }
@@ -384,27 +337,20 @@ public class AdminController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PoliklinikDuzenle(
-        int id,
-        PoliklinikFormViewModel model)
+        int id, PoliklinikFormViewModel model)
     {
         if (id != model.Id)
-        {
             return BadRequest();
-        }
 
         var poliklinik = await _poliklinikService.GetirAsync(id);
 
         if (poliklinik is null)
-        {
             return NotFound();
-        }
 
         if (!ModelState.IsValid)
         {
             await PoliklinikIcinSubeListesiniHazirla(
-                model.SubeId,
-                poliklinik.SubeId);
-
+                model.SubeId, poliklinik.SubeId);
             return View(model);
         }
 
@@ -418,18 +364,13 @@ public class AdminController : Controller
                 model.AktifMi);
 
             if (!guncellendi)
-            {
                 return NotFound();
-            }
         }
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             await PoliklinikIcinSubeListesiniHazirla(
-                model.SubeId,
-                poliklinik.SubeId);
-
+                model.SubeId, poliklinik.SubeId);
             return View(model);
         }
 
@@ -441,12 +382,8 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DurumDegistir(int id)
     {
-        var degisti = await _poliklinikService.DurumDegistirAsync(id);
-
-        if (!degisti)
-        {
+        if (!await _poliklinikService.DurumDegistirAsync(id))
             return NotFound();
-        }
 
         TempData["Basari"] = "Poliklinik durumu güncellendi.";
         return RedirectToAction(nameof(Poliklinikler));
@@ -457,8 +394,7 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> Doktorlar()
     {
-        var doktorlar = await _doktorService.ListeleAsync();
-        return View(doktorlar);
+        return View(await _doktorService.ListeleAsync());
     }
 
     [HttpGet]
@@ -470,8 +406,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DoktorEkle(
-        DoktorEkleViewModel model)
+    public async Task<IActionResult> DoktorEkle(DoktorEkleViewModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -486,14 +421,11 @@ public class AdminController : Controller
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             await PoliklinikListesiniHazirla(model.PoliklinikId);
             return View(model);
         }
 
-        TempData["Basari"] =
-            "Doktor ve giriş hesabı başarıyla oluşturuldu.";
-
+        TempData["Basari"] = "Doktor ve giriş hesabı başarıyla oluşturuldu.";
         return RedirectToAction(nameof(Doktorlar));
     }
 
@@ -503,9 +435,7 @@ public class AdminController : Controller
         var doktor = await _doktorService.GetirAsync(id);
 
         if (doktor is null)
-        {
             return NotFound();
-        }
 
         var model = new DoktorDuzenleViewModel
         {
@@ -518,8 +448,7 @@ public class AdminController : Controller
         };
 
         await PoliklinikListesiniHazirla(
-            model.PoliklinikId,
-            doktor.PoliklinikId);
+            model.PoliklinikId, doktor.PoliklinikId);
 
         return View(model);
     }
@@ -532,38 +461,27 @@ public class AdminController : Controller
         var doktor = await _doktorService.GetirAsync(model.Id);
 
         if (doktor is null)
-        {
             return NotFound();
-        }
 
         model.HesapEpostasi = doktor.Kullanici?.Email;
 
         if (!ModelState.IsValid)
         {
             await PoliklinikListesiniHazirla(
-                model.PoliklinikId,
-                doktor.PoliklinikId);
-
+                model.PoliklinikId, doktor.PoliklinikId);
             return View(model);
         }
 
         try
         {
-            var guncellendi = await _doktorService.GuncelleAsync(model);
-
-            if (!guncellendi)
-            {
+            if (!await _doktorService.GuncelleAsync(model))
                 return NotFound();
-            }
         }
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             await PoliklinikListesiniHazirla(
-                model.PoliklinikId,
-                doktor.PoliklinikId);
-
+                model.PoliklinikId, doktor.PoliklinikId);
             return View(model);
         }
 
@@ -575,12 +493,8 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DoktorDurumDegistir(int id)
     {
-        var degisti = await _doktorService.DurumDegistirAsync(id);
-
-        if (!degisti)
-        {
+        if (!await _doktorService.DurumDegistirAsync(id))
             return NotFound();
-        }
 
         TempData["Basari"] = "Doktor durumu güncellendi.";
         return RedirectToAction(nameof(Doktorlar));
@@ -591,8 +505,7 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> SaglikPersonelleri()
     {
-        var personeller = await _personelService.ListeleAsync();
-        return View(personeller);
+        return View(await _personelService.ListeleAsync());
     }
 
     [HttpGet]
@@ -620,7 +533,6 @@ public class AdminController : Controller
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             await PoliklinikListesiniHazirla(model.PoliklinikId);
             return View(model);
         }
@@ -637,9 +549,7 @@ public class AdminController : Controller
         var personel = await _personelService.GetirAsync(id);
 
         if (personel is null)
-        {
             return NotFound();
-        }
 
         var model = new SaglikPersoneliDuzenleViewModel
         {
@@ -652,8 +562,7 @@ public class AdminController : Controller
         };
 
         await PoliklinikListesiniHazirla(
-            model.PoliklinikId,
-            personel.PoliklinikId);
+            model.PoliklinikId, personel.PoliklinikId);
 
         return View(model);
     }
@@ -661,49 +570,35 @@ public class AdminController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaglikPersoneliDuzenle(
-        int id,
-        SaglikPersoneliDuzenleViewModel model)
+        int id, SaglikPersoneliDuzenleViewModel model)
     {
         if (id != model.Id)
-        {
             return BadRequest();
-        }
 
         var personel = await _personelService.GetirAsync(id);
 
         if (personel is null)
-        {
             return NotFound();
-        }
 
         model.HesapEpostasi = personel.Kullanici?.Email;
 
         if (!ModelState.IsValid)
         {
             await PoliklinikListesiniHazirla(
-                model.PoliklinikId,
-                personel.PoliklinikId);
-
+                model.PoliklinikId, personel.PoliklinikId);
             return View(model);
         }
 
         try
         {
-            var guncellendi = await _personelService.GuncelleAsync(model);
-
-            if (!guncellendi)
-            {
+            if (!await _personelService.GuncelleAsync(model))
                 return NotFound();
-            }
         }
         catch (ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-
             await PoliklinikListesiniHazirla(
-                model.PoliklinikId,
-                personel.PoliklinikId);
-
+                model.PoliklinikId, personel.PoliklinikId);
             return View(model);
         }
 
@@ -715,12 +610,8 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaglikPersoneliDurumDegistir(int id)
     {
-        var degisti = await _personelService.DurumDegistirAsync(id);
-
-        if (!degisti)
-        {
+        if (!await _personelService.DurumDegistirAsync(id))
             return NotFound();
-        }
 
         TempData["Basari"] = "Personelin aktiflik durumu güncellendi.";
         return RedirectToAction(nameof(SaglikPersonelleri));
@@ -739,6 +630,7 @@ public class AdminController : Controller
     {
         await CalismaSaatiDoktorlariniHazirla();
         CalismaGunleriniHazirla();
+
         return View(new DoktorCalismaSaatiFormViewModel());
     }
 
@@ -763,6 +655,7 @@ public class AdminController : Controller
 
         await CalismaSaatiDoktorlariniHazirla(model.DoktorId);
         CalismaGunleriniHazirla(model.Gun);
+
         return View(model);
     }
 
@@ -770,10 +663,9 @@ public class AdminController : Controller
     public async Task<IActionResult> CalismaSaatiDuzenle(int id)
     {
         var kayit = await _calismaSaatiService.GetirAsync(id);
+
         if (kayit is null)
-        {
             return NotFound();
-        }
 
         var model = new DoktorCalismaSaatiFormViewModel
         {
@@ -788,40 +680,32 @@ public class AdminController : Controller
 
         ViewBag.DoktorBilgisi = CalismaSaatiDoktorMetni(kayit.Doktor);
         CalismaGunleriniHazirla(model.Gun);
+
         return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CalismaSaatiDuzenle(
-        int id,
-        DoktorCalismaSaatiFormViewModel model)
+        int id, DoktorCalismaSaatiFormViewModel model)
     {
         if (id != model.Id)
-        {
             return BadRequest();
-        }
 
         var kayit = await _calismaSaatiService.GetirAsync(id);
+
         if (kayit is null)
-        {
             return NotFound();
-        }
 
         if (model.DoktorId != kayit.DoktorId)
-        {
             return BadRequest();
-        }
 
         if (ModelState.IsValid)
         {
             try
             {
-                var guncellendi = await _calismaSaatiService.GuncelleAsync(model);
-                if (!guncellendi)
-                {
+                if (!await _calismaSaatiService.GuncelleAsync(model))
                     return NotFound();
-                }
 
                 TempData["Basari"] = "Çalışma saati başarıyla güncellendi.";
                 return RedirectToAction(nameof(CalismaSaatleri));
@@ -834,6 +718,7 @@ public class AdminController : Controller
 
         ViewBag.DoktorBilgisi = CalismaSaatiDoktorMetni(kayit.Doktor);
         CalismaGunleriniHazirla(model.Gun);
+
         return View(model);
     }
 
@@ -843,13 +728,11 @@ public class AdminController : Controller
     {
         try
         {
-            var degisti = await _calismaSaatiService.DurumDegistirAsync(id);
-            if (!degisti)
-            {
+            if (!await _calismaSaatiService.DurumDegistirAsync(id))
                 return NotFound();
-            }
 
-            TempData["Basari"] = "Çalışma saatinin aktiflik durumu güncellendi.";
+            TempData["Basari"] =
+                "Çalışma saatinin aktiflik durumu güncellendi.";
         }
         catch (ArgumentException ex)
         {
@@ -859,29 +742,196 @@ public class AdminController : Controller
         return RedirectToAction(nameof(CalismaSaatleri));
     }
 
+    // ÜCRETLER, PERSONEL HİZMETLERİ VE RANDEVU ONAYLARI
+
+    [HttpGet]
+    public async Task<IActionResult> UcretVeHizmetler()
+    {
+        return View(await _randevuKayitService.TarifelerAsync());
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Randevular()
+    {
+        var randevular = await _randevuKayitService.ListeAsync();
+
+        return View("~/Views/Randevu/Liste.cshtml", randevular);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DoktorUcreti(int id, string ucret)
+    {
+        try
+        {
+            RandevuFormunuKontrolEt();
+
+            await _randevuKayitService.DoktorUcretiAsync(
+                id, RandevuKayitService.UcretOku(ucret));
+
+            TempData["Basari"] = "Doktor ücreti güncellendi.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["Hata"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(UcretVeHizmetler));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PersonelHizmetiKaydet(
+        int id,
+        int personelId,
+        string ad,
+        int sure,
+        string ucret,
+        bool aktif)
+    {
+        try
+        {
+            RandevuFormunuKontrolEt();
+
+            await _randevuKayitService.HizmetKaydetAsync(
+                id,
+                personelId,
+                ad,
+                sure,
+                RandevuKayitService.UcretOku(ucret),
+                aktif);
+
+            TempData["Basari"] = "Hizmet kaydedildi.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["Hata"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(UcretVeHizmetler));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PersonelCalismaSaatiEkle(
+        int personelId,
+        int gun,
+        string baslangic,
+        string bitis)
+    {
+        try
+        {
+            RandevuFormunuKontrolEt();
+
+            if (!TimeOnly.TryParseExact(
+                    baslangic,
+                    "HH:mm",
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out var baslangicSaati)
+                || !TimeOnly.TryParseExact(
+                    bitis,
+                    "HH:mm",
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out var bitisSaati))
+            {
+                throw new ArgumentException(
+                    "Geçerli başlangıç ve bitiş saati girin.");
+            }
+
+            await _randevuKayitService.SaatEkleAsync(
+                personelId, gun, baslangicSaati, bitisSaati);
+
+            TempData["Basari"] = "Personel çalışma saati eklendi.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["Hata"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(UcretVeHizmetler));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PersonelCalismaSaatiSil(int id)
+    {
+        try
+        {
+            RandevuFormunuKontrolEt();
+            await _randevuKayitService.SaatSilAsync(id);
+            TempData["Basari"] = "Çalışma saati kaldırıldı.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["Hata"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(UcretVeHizmetler));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RandevuKarar(int id, string karar)
+    {
+        try
+        {
+            RandevuFormunuKontrolEt();
+            await _randevuKayitService.AdminKararAsync(id, karar);
+            TempData["Basari"] = "Randevu durumu güncellendi.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["Hata"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Randevular));
+    }
+
+    private void RandevuFormunuKontrolEt()
+    {
+        if (!ModelState.IsValid)
+        {
+            throw new ArgumentException(
+                "Gönderilen form bilgileri geçersiz.");
+        }
+    }
+
     // FORM SEÇENEKLERİ
 
-    private async Task CalismaSaatiDoktorlariniHazirla(int? seciliId = null)
+    private async Task CalismaSaatiDoktorlariniHazirla(
+        int? seciliId = null)
     {
-        var doktorlar = await _calismaSaatiService.SecilebilirDoktorlariListeleAsync();
+        var doktorlar =
+            await _calismaSaatiService.SecilebilirDoktorlariListeleAsync();
+
         ViewBag.Doktorlar = doktorlar.Select(d => new SelectListItem
         {
             Value = d.Id.ToString(),
             Text = CalismaSaatiDoktorMetni(d),
             Selected = d.Id == seciliId
         }).ToList();
+
         ViewBag.SecilebilirDoktorVar = doktorlar.Count > 0;
     }
 
-    private void CalismaGunleriniHazirla(DayOfWeek? seciliGun = null)
+    private void CalismaGunleriniHazirla(
+        DayOfWeek? seciliGun = null)
     {
         var gunler = new[]
         {
-            DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
-            DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday,
+            DayOfWeek.Monday,
+            DayOfWeek.Tuesday,
+            DayOfWeek.Wednesday,
+            DayOfWeek.Thursday,
+            DayOfWeek.Friday,
+            DayOfWeek.Saturday,
             DayOfWeek.Sunday
         };
-        var kultur = System.Globalization.CultureInfo.GetCultureInfo("tr-TR");
+
+        var kultur = CultureInfo.GetCultureInfo("tr-TR");
+
         ViewBag.Gunler = gunler.Select(g => new SelectListItem
         {
             Value = ((int)g).ToString(),
@@ -897,8 +947,7 @@ public class AdminController : Controller
                (!doktor.AktifMi ? " (Doktor pasif)" : "");
     }
 
-    private async Task KurumListesiniHazirla(
-        int? seciliId = null)
+    private async Task KurumListesiniHazirla(int? seciliId = null)
     {
         var kurumlar = await _kurumService.ListeleAsync();
 
@@ -964,8 +1013,7 @@ public class AdminController : Controller
             .ToList();
     }
 
-    private static bool YeniAtamayaUygunMu(
-        Poliklinik poliklinik)
+    private static bool YeniAtamayaUygunMu(Poliklinik poliklinik)
     {
         return poliklinik.AktifMi &&
                poliklinik.Sube is not null &&
@@ -974,34 +1022,23 @@ public class AdminController : Controller
                poliklinik.Sube.Kurum.AktifMi;
     }
 
-    private static string PoliklinikSecenekMetni(
-        Poliklinik poliklinik)
+    private static string PoliklinikSecenekMetni(Poliklinik poliklinik)
     {
-        var hastaneAdi =
-            poliklinik.Sube?.Ad ?? "Hastane atanmamış";
-
+        var hastaneAdi = poliklinik.Sube?.Ad ?? "Hastane atanmamış";
         var metin = $"{hastaneAdi} / {poliklinik.Ad}";
 
         if (!poliklinik.AktifMi)
-        {
             metin += " (Poliklinik pasif)";
-        }
 
         if (poliklinik.Sube is not null)
         {
             if (!poliklinik.Sube.AktifMi)
-            {
                 metin += " (Hastane pasif)";
-            }
 
             if (poliklinik.Sube.Kurum is null)
-            {
                 metin += " (Kurum bağlantısı bulunamadı)";
-            }
             else if (!poliklinik.Sube.Kurum.AktifMi)
-            {
                 metin += " (Kurum pasif)";
-            }
         }
 
         return metin;

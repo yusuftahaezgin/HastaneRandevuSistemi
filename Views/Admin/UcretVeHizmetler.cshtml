@@ -1,0 +1,366 @@
+@model TarifeYonetimModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Ücret ve Hizmet Yönetimi";
+    var tr = CultureInfo.GetCultureInfo("tr-TR");
+}
+
+<div class="py-5">
+    <h2>Ücret ve Hizmet Yönetimi</h2>
+
+    <p>
+        Ücret değişiklikleri yeni randevularda geçerlidir.
+        Kaydedilmiş randevuların ücretleri korunur.
+    </p>
+
+    <a asp-controller="Admin"
+       asp-action="Randevular"
+       class="btn btn-primary mb-3">
+        Randevu Onayları
+    </a>
+
+    <a asp-controller="Admin"
+       asp-action="Index"
+       class="btn btn-outline-secondary mb-3">
+        Yönetici Paneli
+    </a>
+
+    @if (TempData["Hata"] is string hata)
+    {
+        <div class="alert alert-danger">@hata</div>
+    }
+
+    @if (TempData["Basari"] is string basari)
+    {
+        <div class="alert alert-success">@basari</div>
+    }
+
+    <h3 class="h4 mt-4">Doktor Muayene Ücretleri</h3>
+
+    @foreach (var d in Model.Doktorlar)
+    {
+        <form asp-controller="Admin"
+              asp-action="DoktorUcreti"
+              method="post"
+              class="card p-3 mb-2">
+
+            <input type="hidden" name="id" value="@d.Id" />
+
+            <div class="row align-items-center g-2">
+                <div class="col-md-7">
+                    <strong>@d.GorunenAdGetir()</strong>
+                    <br />
+                    @d.Poliklinik.Sube?.Ad / @d.Poliklinik.Ad
+                </div>
+
+                <div class="col-md-3">
+                    <label for="ucret-@d.Id" class="form-label">
+                        Muayene ücreti (TL)
+                    </label>
+
+                    <input id="ucret-@d.Id"
+                           name="ucret"
+                           value="@(d.RandevuUcreti?.ToString(CultureInfo.InvariantCulture))"
+                           placeholder="Örneğin 1000"
+                           inputmode="decimal"
+                           class="form-control"
+                           required />
+                </div>
+
+                <div class="col-md-2">
+                    <button class="btn btn-primary">Kaydet</button>
+                </div>
+            </div>
+        </form>
+    }
+
+    <h3 class="h4 mt-5">Sağlık Personeline Hizmet Ekle</h3>
+
+    <form asp-controller="Admin"
+          asp-action="PersonelHizmetiKaydet"
+          method="post"
+          class="card p-3 mb-4">
+
+        <input type="hidden" name="id" value="0" />
+
+        <label for="personel" class="form-label">
+            Sağlık personeli
+        </label>
+
+        <select id="personel"
+                name="personelId"
+                class="form-select mb-3"
+                required>
+            <option value="">Personel seçin</option>
+
+            @foreach (var p in Model.Personeller)
+            {
+                <option value="@p.Id">
+                    @p.Poliklinik.Sube?.Ad /
+                    @p.Poliklinik.Ad /
+                    @p.GorunenAdGetir()
+                </option>
+            }
+        </select>
+
+        <div class="row g-3">
+            <div class="col-md-5">
+                <label for="ad" class="form-label">Hizmet adı</label>
+
+                <input id="ad"
+                       name="ad"
+                       class="form-control"
+                       maxlength="150"
+                       placeholder="Kan alma, röntgen..."
+                       required />
+            </div>
+
+            <div class="col-md-3">
+                <label for="sure" class="form-label">
+                    Süre (dakika)
+                </label>
+
+                <input id="sure"
+                       name="sure"
+                       type="number"
+                       value="20"
+                       min="5"
+                       max="120"
+                       class="form-control"
+                       required />
+            </div>
+
+            <div class="col-md-4">
+                <label for="ucret" class="form-label">
+                    Ücret (TL)
+                </label>
+
+                <input id="ucret"
+                       name="ucret"
+                       inputmode="decimal"
+                       class="form-control"
+                       required />
+            </div>
+        </div>
+
+        <label class="my-3">
+            <input type="checkbox"
+                   name="aktif"
+                   value="true"
+                   checked />
+            Aktif
+        </label>
+
+        <div>
+            <button class="btn btn-primary">Hizmet Ekle</button>
+        </div>
+    </form>
+
+    <h3 class="h4">Mevcut Hizmetler</h3>
+
+    @if (Model.Hizmetler.Count == 0)
+    {
+        <p class="text-muted">Henüz hizmet tanımlanmadı.</p>
+    }
+
+    @foreach (var h in Model.Hizmetler)
+    {
+        <form asp-controller="Admin"
+              asp-action="PersonelHizmetiKaydet"
+              method="post"
+              class="card p-3 mb-3">
+
+            <input type="hidden" name="id" value="@h.Id" />
+            <input type="hidden"
+                   name="personelId"
+                   value="@h.PersonelId" />
+
+            <p>
+                <strong>@h.Personel.GorunenAdGetir()</strong>
+                / @h.Personel.Poliklinik.Sube?.Ad
+            </p>
+
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <label for="ad-@h.Id" class="form-label">
+                        Hizmet adı
+                    </label>
+
+                    <input id="ad-@h.Id"
+                           name="ad"
+                           value="@h.Ad"
+                           maxlength="150"
+                           class="form-control"
+                           required />
+                </div>
+
+                <div class="col-md-2">
+                    <label for="sure-@h.Id" class="form-label">
+                        Dakika
+                    </label>
+
+                    <input id="sure-@h.Id"
+                           name="sure"
+                           type="number"
+                           value="@h.SureDakika"
+                           min="5"
+                           max="120"
+                           class="form-control"
+                           required />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="fiyat-@h.Id" class="form-label">
+                        Ücret (TL)
+                    </label>
+
+                    <input id="fiyat-@h.Id"
+                           name="ucret"
+                           value="@h.Ucret.ToString(CultureInfo.InvariantCulture)"
+                           inputmode="decimal"
+                           class="form-control"
+                           required />
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <label>
+                        <input type="checkbox"
+                               name="aktif"
+                               value="true"
+                               checked="@h.AktifMi" />
+                        Aktif
+                    </label>
+
+                    <button class="btn btn-primary">
+                        Güncelle
+                    </button>
+                </div>
+            </div>
+        </form>
+    }
+
+    <h3 class="h4 mt-5">Sağlık Personeli Çalışma Saatleri</h3>
+
+    <p>
+        Hizmet süresine göre bu aralıklardan randevu saatleri üretilecek.
+        Öğle arası için iki ayrı aralık ekleyebilirsiniz.
+    </p>
+
+    <form asp-controller="Admin"
+          asp-action="PersonelCalismaSaatiEkle"
+          method="post"
+          class="card p-3 mb-3">
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="saatPersonel" class="form-label">
+                    Personel
+                </label>
+
+                <select id="saatPersonel"
+                        name="personelId"
+                        class="form-select"
+                        required>
+                    <option value="">Personel seçin</option>
+
+                    @foreach (var p in Model.Personeller)
+                    {
+                        <option value="@p.Id">
+                            @p.Poliklinik.Sube?.Ad /
+                            @p.GorunenAdGetir()
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="gun" class="form-label">Gün</label>
+
+                <select id="gun" name="gun" class="form-select">
+                    @foreach (var g in new[] { 1, 2, 3, 4, 5, 6, 0 })
+                    {
+                        <option value="@g">
+                            @tr.DateTimeFormat.GetDayName((DayOfWeek)g)
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="baslangic" class="form-label">
+                    Başlangıç
+                </label>
+
+                <input id="baslangic"
+                       name="baslangic"
+                       type="time"
+                       step="60"
+                       required
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-2">
+                <label for="bitis" class="form-label">Bitiş</label>
+
+                <input id="bitis"
+                       name="bitis"
+                       type="time"
+                       step="60"
+                       required
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary">Ekle</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Personel</th>
+                    <th>Gün</th>
+                    <th>Saat Aralığı</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var s in Model.Saatler)
+                {
+                    <tr>
+                        <td>@s.Personel.GorunenAdGetir()</td>
+
+                        <td>
+                            @tr.DateTimeFormat.GetDayName(s.Gun)
+                        </td>
+
+                        <td>
+                            @s.Baslangic.ToString("HH:mm")
+                            –
+                            @s.Bitis.ToString("HH:mm")
+                        </td>
+
+                        <td>
+                            <form asp-controller="Admin"
+                                  asp-action="PersonelCalismaSaatiSil"
+                                  method="post">
+
+                                <input type="hidden"
+                                       name="id"
+                                       value="@s.Id" />
+
+                                <button class="btn btn-outline-danger btn-sm">
+                                    Kaldır
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

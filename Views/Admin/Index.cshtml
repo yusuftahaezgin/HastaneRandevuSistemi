@@ -1,5 +1,49 @@
 @{
     ViewData["Title"] = "Yönetici Paneli";
+
+    var kartlar = new[]
+    {
+        (
+            "UcretVeHizmetler",
+            "Ücret ve Hizmet Yönetimi",
+            "Doktor ücretlerini, sağlık personeli hizmetlerini ve personel çalışma saatlerini yönetin."
+        ),
+        (
+            "Randevular",
+            "Randevu Onayları",
+            "Hasta taleplerini inceleyin, onaylayın, reddedin veya iptal edin."
+        ),
+        (
+            "CalismaSaatleri",
+            "Doktor Çalışma Saatleri",
+            "Doktorların haftalık çalışma günlerini, saatlerini ve randevu sürelerini yönetin."
+        ),
+        (
+            "Kurumlar",
+            "Kurum Yönetimi",
+            "Kurum kategorilerini ve aktiflik durumlarını yönetin."
+        ),
+        (
+            "Subeler",
+            "Şube Yönetimi",
+            "Hastanelerin adreslerini ve iletişim bilgilerini yönetin."
+        ),
+        (
+            "Poliklinikler",
+            "Poliklinik Yönetimi",
+            "Poliklinikleri ve aktiflik durumlarını yönetin."
+        ),
+        (
+            "Doktorlar",
+            "Doktor Yönetimi",
+            "Doktorları, polikliniklerini ve giriş hesaplarını yönetin."
+        ),
+        (
+            "SaglikPersonelleri",
+            "Sağlık Personeli Yönetimi",
+            "Personelleri, görevlerini ve giriş hesaplarını yönetin."
+        )
+    };
 }
 
 <div class="container py-5">
@@ -11,97 +55,21 @@
     </div>
 
     <div class="row g-4">
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 p-4">
-                <h4 class="mb-3">Doktor Çalışma Saatleri</h4>
-                <p class="text-muted">
-                    Doktorların haftalık çalışma günlerini, saatlerini ve randevu sürelerini yönetin.
-                </p>
-                <a asp-controller="Admin" asp-action="CalismaSaatleri"
-                   class="btn btn-primary mt-auto">
-                    Çalışma Saatlerini Yönet
-                </a>
+        @foreach (var kart in kartlar)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 p-4">
+                    <h4 class="mb-3">@kart.Item2</h4>
+
+                    <p class="text-muted">@kart.Item3</p>
+
+                    <a asp-controller="Admin"
+                       asp-action="@kart.Item1"
+                       class="btn btn-primary mt-auto">
+                        Yönet
+                    </a>
+                </div>
             </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 p-4">
-                <h4 class="mb-3">Kurum Yönetimi</h4>
-
-                <p class="text-muted">
-                    Kurum kategorilerini ve aktiflik durumlarını yönetin.
-                </p>
-
-                <a asp-controller="Admin"
-                   asp-action="Kurumlar"
-                   class="btn btn-primary mt-auto">
-                    Kurumları Yönet
-                </a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 p-4">
-                <h4 class="mb-3">Şube Yönetimi</h4>
-
-                <p class="text-muted">
-                    Kurumlara bağlı hastaneleri, adreslerini ve iletişim bilgilerini yönetin.
-                </p>
-
-                <a asp-controller="Admin"
-                   asp-action="Subeler"
-                   class="btn btn-primary mt-auto">
-                    Şubeleri Yönet
-                </a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 p-4">
-                <h4 class="mb-3">Poliklinik Yönetimi</h4>
-
-                <p class="text-muted">
-                    Poliklinik ekleyin, bilgilerini ve aktiflik durumunu düzenleyin.
-                </p>
-
-                <a asp-controller="Admin"
-                   asp-action="Poliklinikler"
-                   class="btn btn-primary mt-auto">
-                    Poliklinikleri Yönet
-                </a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 p-4">
-                <h4 class="mb-3">Doktor Yönetimi</h4>
-
-                <p class="text-muted">
-                    Doktorları, polikliniklerini ve giriş hesaplarını yönetin.
-                </p>
-
-                <a asp-controller="Admin"
-                   asp-action="Doktorlar"
-                   class="btn btn-primary mt-auto">
-                    Doktorları Yönet
-                </a>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 p-4">
-                <h4 class="mb-3">Sağlık Personeli Yönetimi</h4>
-
-                <p class="text-muted">
-                    Sağlık personelini, görevlerini ve polikliniklerini yönetin.
-                </p>
-
-                <a asp-controller="Admin"
-                   asp-action="SaglikPersonelleri"
-                   class="btn btn-primary mt-auto">
-                    Sağlık Personelini Yönet
-                </a>
-            </div>
-        </div>
+        }
     </div>
 </div>

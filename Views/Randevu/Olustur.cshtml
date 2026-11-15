@@ -1,52 +1,58 @@
-@using Microsoft.AspNetCore.Mvc.Rendering
+@model RandevuSecimViewModel
 @using System.Globalization
-@model HastaneRandevuSistemi.Models.RandevuSecimViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     ViewData["Title"] = "Randevu Al";
 
-    var kultur = CultureInfo.GetCultureInfo("tr-TR");
+    var tr = CultureInfo.GetCultureInfo("tr-TR");
 
-    var seciliKurum = Model.Kurumlar
-        .FirstOrDefault(k => k.Id == Model.SeciliKurumId);
+    var kurum = Model.Kurumlar
+        .FirstOrDefault(x => x.Id == Model.SeciliKurumId);
 
-    var seciliSube = Model.Subeler
-        .FirstOrDefault(s => s.Id == Model.SeciliSubeId);
+    var sube = Model.Subeler
+        .FirstOrDefault(x => x.Id == Model.SeciliSubeId);
 
-    var seciliPoliklinik = Model.Poliklinikler
-        .FirstOrDefault(p => p.Id == Model.SeciliPoliklinikId);
+    var poliklinik = Model.Poliklinikler
+        .FirstOrDefault(x => x.Id == Model.SeciliPoliklinikId);
 }
 
 <section class="booking-page">
     <div class="booking-header">
         <span class="page-label">RANDEVU İŞLEMLERİ</span>
         <h1>Randevu Al</h1>
+        <p>Kurum, hastane, poliklinik ve doktor seçin.</p>
 
-        <p>
-            Kurum, hastane, poliklinik ve doktor seçerek çalışma saatlerini inceleyin.
-        </p>
+        <a asp-action="Hizmet" class="btn btn-outline-primary">
+            Sağlık Personeli Hizmetleri
+        </a>
+
+        <a asp-action="Liste" class="btn btn-outline-secondary">
+            Randevularım
+        </a>
     </div>
 
+    @if (TempData["Hata"] is string hata)
+    {
+        <div class="alert alert-danger">@hata</div>
+    }
+
     <div asp-validation-summary="All"
-         class="text-danger mb-3"
-         role="alert">
+         class="text-danger mb-3">
     </div>
 
     <div class="booking-panel">
         @if (Model.Kurumlar.Count == 0)
         {
-            <div class="alert alert-info mb-0">
-                Şu anda seçim yapabileceğiniz aktif bir kurum bulunmuyor.
+            <div class="alert alert-info">
+                Aktif kurum bulunmuyor.
             </div>
         }
         else
         {
             <div class="row g-4">
                 <div class="col-lg-4">
-                    <form asp-controller="Randevu"
-                          asp-action="Olustur"
-                          method="get">
-
+                    <form asp-action="Olustur" method="get">
                         <label for="kurumId" class="form-label">
                             1. Kurum
                         </label>
@@ -59,12 +65,10 @@
                                     "Id",
                                     "Ad",
                                     Model.SeciliKurumId))">
-
                             <option value="">Kurum seçin</option>
                         </select>
 
-                        <button type="submit"
-                                class="btn btn-primary mt-3">
+                        <button class="btn btn-primary mt-3">
                             Hastaneleri Göster
                         </button>
                     </form>
@@ -75,16 +79,13 @@
                     <div class="col-lg-4">
                         @if (Model.Subeler.Count == 0)
                         {
-                            <div class="alert alert-info mb-0">
+                            <div class="alert alert-info">
                                 Bu kuruma bağlı aktif hastane bulunmuyor.
                             </div>
                         }
                         else
                         {
-                            <form asp-controller="Randevu"
-                                  asp-action="Olustur"
-                                  method="get">
-
+                            <form asp-action="Olustur" method="get">
                                 <input type="hidden"
                                        name="kurumId"
                                        value="@Model.SeciliKurumId" />
@@ -101,12 +102,10 @@
                                             "Id",
                                             "Ad",
                                             Model.SeciliSubeId))">
-
                                     <option value="">Hastane seçin</option>
                                 </select>
 
-                                <button type="submit"
-                                        class="btn btn-primary mt-3">
+                                <button class="btn btn-primary mt-3">
                                     Poliklinikleri Göster
                                 </button>
                             </form>
@@ -119,16 +118,13 @@
                     <div class="col-lg-4">
                         @if (Model.Poliklinikler.Count == 0)
                         {
-                            <div class="alert alert-info mb-0">
+                            <div class="alert alert-info">
                                 Bu hastaneye bağlı aktif poliklinik bulunmuyor.
                             </div>
                         }
                         else
                         {
-                            <form asp-controller="Randevu"
-                                  asp-action="Olustur"
-                                  method="get">
-
+                            <form asp-action="Olustur" method="get">
                                 <input type="hidden"
                                        name="kurumId"
                                        value="@Model.SeciliKurumId" />
@@ -149,12 +145,10 @@
                                             "Id",
                                             "Ad",
                                             Model.SeciliPoliklinikId))">
-
                                     <option value="">Poliklinik seçin</option>
                                 </select>
 
-                                <button type="submit"
-                                        class="btn btn-primary mt-3">
+                                <button class="btn btn-primary mt-3">
                                     Doktorları Göster
                                 </button>
                             </form>
@@ -171,89 +165,73 @@
             <h2>Doktorlar</h2>
 
             <p class="text-muted">
-                @seciliKurum?.Ad /
-                @seciliSube?.Ad /
-                @seciliPoliklinik?.Ad
+                @kurum?.Ad / @sube?.Ad / @poliklinik?.Ad
             </p>
 
             @if (Model.Doktorlar.Count == 0)
             {
                 <div class="alert alert-info">
-                    Bu poliklinikte şu anda aktif doktor bulunmuyor.
+                    Bu poliklinikte aktif doktor bulunmuyor.
                 </div>
             }
-            else
-            {
-                <div class="row g-3">
-                    @foreach (var doktor in Model.Doktorlar)
-                    {
-                        var seciliMi = Model.SeciliDoktorId == doktor.Id;
 
-                        <div class="col-md-6 col-xl-4">
-                            <div class="doctor-card">
-                                <div class="doctor-card-top">
-                                    <span class="doctor-label">DOKTOR</span>
+            <div class="row g-3">
+                @foreach (var d in Model.Doktorlar)
+                {
+                    <div class="col-md-6 col-xl-4">
+                        <div class="doctor-card">
+                            <div class="doctor-card-top">
+                                <span class="doctor-label">DOKTOR</span>
 
-                                    @if (seciliMi)
-                                    {
-                                        <span class="badge bg-success">
-                                            Seçildi
-                                        </span>
-                                    }
-                                </div>
-
-                                <h3>@doktor.GorunenAdGetir()</h3>
-
-                                <p class="doctor-specialty">
-                                    @doktor.Poliklinik.Ad
-                                </p>
-
-                                <p class="text-muted">
-                                    @seciliSube?.Ad
-                                </p>
-
-                                <a asp-controller="Randevu"
-                                   asp-action="Olustur"
-                                   asp-route-kurumId="@Model.SeciliKurumId"
-                                   asp-route-subeId="@Model.SeciliSubeId"
-                                   asp-route-poliklinikId="@Model.SeciliPoliklinikId"
-                                   asp-route-doktorId="@doktor.Id"
-                                   class="doctor-select-link">
-                                    @(seciliMi ? "Seçilen Doktor" : "Doktoru Seç →")
-                                </a>
+                                @if (Model.SeciliDoktorId == d.Id)
+                                {
+                                    <span class="badge bg-success">
+                                        Seçildi
+                                    </span>
+                                }
                             </div>
+
+                            <h3>@d.GorunenAdGetir()</h3>
+
+                            <p class="doctor-specialty">
+                                @d.Poliklinik.Ad
+                            </p>
+
+                            <p>@sube?.Ad</p>
+
+                            <p>
+                                <strong>
+                                    @(d.RandevuUcreti.HasValue
+                                        ? d.RandevuUcreti.Value.ToString("N2", tr) + " TL"
+                                        : "Ücret henüz tanımlanmadı")
+                                </strong>
+                            </p>
+
+                            <a asp-action="Olustur"
+                               asp-route-kurumId="@Model.SeciliKurumId"
+                               asp-route-subeId="@Model.SeciliSubeId"
+                               asp-route-poliklinikId="@Model.SeciliPoliklinikId"
+                               asp-route-doktorId="@d.Id"
+                               class="doctor-select-link">
+                                Doktoru Seç →
+                            </a>
                         </div>
-                    }
-                </div>
-            }
+                    </div>
+                }
+            </div>
         </div>
     }
 
-    @if (Model.SeciliDoktor is not null)
+    @if (Model.SeciliDoktor is { } doktor)
     {
         <div class="booking-panel selected-doctor">
             <span class="page-label">SEÇİMİNİZ</span>
 
-            <h2>@Model.SeciliDoktor.GorunenAdGetir()</h2>
+            <h2>@doktor.GorunenAdGetir()</h2>
 
-            <dl class="row mb-0">
-                <dt class="col-sm-3">Kurum</dt>
-                <dd class="col-sm-9">@seciliKurum?.Ad</dd>
+            <p>@kurum?.Ad / @sube?.Ad / @poliklinik?.Ad</p>
 
-                <dt class="col-sm-3">Hastane</dt>
-                <dd class="col-sm-9">@seciliSube?.Ad</dd>
-
-                <dt class="col-sm-3">Poliklinik</dt>
-                <dd class="col-sm-9">@seciliPoliklinik?.Ad</dd>
-            </dl>
-
-            <hr class="my-4" />
-
-            <form asp-controller="Randevu"
-                  asp-action="Olustur"
-                  method="get"
-                  novalidate>
-
+            <form asp-action="Olustur" method="get" novalidate>
                 <input type="hidden"
                        name="kurumId"
                        value="@Model.SeciliKurumId" />
@@ -268,94 +246,124 @@
 
                 <input type="hidden"
                        name="doktorId"
-                       value="@Model.SeciliDoktorId" />
+                       value="@doktor.Id" />
 
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-6">
-                        <label for="tarih" class="form-label">
-                            Randevu Tarihi
-                        </label>
+                <label for="tarih" class="form-label">
+                    Randevu Tarihi
+                </label>
 
-                        <input id="tarih"
-                               name="tarih"
-                               type="date"
-                               class="form-control"
-                               value="@(Model.SeciliTarih?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))"
-                               min="@Model.Bugun.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"
-                               max="@Model.SonSecilebilirTarih.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)"
-                               aria-describedby="tarihAciklama" />
-                    </div>
+                <div class="d-flex gap-2">
+                    <input id="tarih"
+                           name="tarih"
+                           type="date"
+                           class="form-control"
+                           value="@(Model.SeciliTarih?.ToString("yyyy-MM-dd"))"
+                           min="@Model.Bugun.ToString("yyyy-MM-dd")"
+                           max="@Model.SonSecilebilirTarih.ToString("yyyy-MM-dd")" />
 
-                    <div class="col-md-6">
-                        <button type="submit"
-                                class="btn btn-primary">
-                            Saatleri Göster
-                        </button>
-                    </div>
+                    <button class="btn btn-primary text-nowrap">
+                        Saatleri Göster
+                    </button>
                 </div>
 
-                <p id="tarihAciklama"
-                   class="text-muted small mt-2">
-                    Bugün ile
-                    @Model.SonSecilebilirTarih.ToString("dd.MM.yyyy")
-                    arasında seçim yapabilirsiniz.
+                <p class="form-text">
                     Saatler Türkiye saatine göredir.
+                    En fazla 30 gün sonrası seçilebilir.
                 </p>
             </form>
 
-            @if (Model.SeciliTarih.HasValue)
+            @if (!doktor.RandevuUcreti.HasValue)
             {
-                <h3 class="h5 mt-4">
+                <div class="alert alert-info">
+                    Yönetici bu doktor için ücret tanımladığında
+                    randevu talebi oluşturabilirsiniz.
+                </div>
+            }
+            else if (Model.SeciliTarih.HasValue)
+            {
+                <h3 class="h5">
                     @Model.SeciliTarih.Value.ToString(
-                        "dd MMMM yyyy dddd",
-                        kultur)
+                        "dd MMMM yyyy dddd", tr)
                 </h3>
+
+                <p>
+                    <strong>
+                        Muayene ücreti:
+                        @doktor.RandevuUcreti.Value.ToString("N2", tr) TL
+                    </strong>
+                    Randevu talebi yönetici onayına gönderilir.
+                </p>
 
                 @if (!Model.SeciliGundeCalismaVar)
                 {
-                    <div class="alert alert-info mt-3">
-                        Doktorun seçilen gün için aktif çalışma programı
-                        bulunmuyor. Başka bir tarih seçebilirsiniz.
+                    <div class="alert alert-info">
+                        Doktorun seçilen gün için aktif çalışma
+                        programı bulunmuyor.
                     </div>
                 }
                 else if (Model.Saatler.Count == 0)
                 {
-                    <div class="alert alert-info mt-3">
-                        Seçilen gün için ileri bir randevu saati kalmadı.
-                        Başka bir tarih seçebilirsiniz.
+                    <div class="alert alert-info">
+                        Uygun saat kalmadı. Başka tarih seçebilirsiniz.
                     </div>
                 }
                 else
                 {
-                    <p class="text-muted">
-                        Çalışma programına göre
-                        @Model.Saatler.Count saat aralığı listeleniyor.
-                    </p>
-
                     <div class="row g-2">
-                        @foreach (var saat in Model.Saatler)
+                        @foreach (var s in Model.Saatler)
                         {
-                            <div class="col-6 col-md-4 col-xl-3">
-                                <div class="border rounded p-3 bg-white text-center h-100">
-                                    <strong class="text-nowrap">
-                                        @saat.BaslangicSaati.ToString("HH:mm")
+                            <div class="col-sm-6 col-xl-3">
+                                <form asp-action="DoktorKaydet"
+                                      method="post"
+                                      class="border rounded p-3 bg-white text-center h-100">
+
+                                    <input type="hidden"
+                                           name="doktorId"
+                                           value="@doktor.Id" />
+
+                                    <input type="hidden"
+                                           name="poliklinikId"
+                                           value="@Model.SeciliPoliklinikId" />
+
+                                    <input type="hidden"
+                                           name="tarih"
+                                           value="@Model.SeciliTarih.Value.ToString("yyyy-MM-dd")" />
+
+                                    <input type="hidden"
+                                           name="saat"
+                                           value="@s.BaslangicSaati.ToString("HH:mm")" />
+
+                                    <input type="hidden"
+                                           name="ucret"
+                                           value="@doktor.RandevuUcreti.Value.ToString(CultureInfo.InvariantCulture)" />
+
+                                    <input type="hidden"
+                                           name="sure"
+                                           value="@s.RandevuSuresiDakika" />
+
+                                    <strong>
+                                        @s.BaslangicSaati.ToString("HH:mm")
                                         –
-                                        @saat.BitisSaati.ToString("HH:mm")
+                                        @s.BitisSaati.ToString("HH:mm")
                                     </strong>
 
-                                    <div class="small text-muted">
-                                        @saat.RandevuSuresiDakika dakika
+                                    <div>
+                                        @s.RandevuSuresiDakika dakika
                                     </div>
-                                </div>
+
+                                    <div>
+                                        @doktor.RandevuUcreti.Value.ToString("N2", tr) TL
+                                    </div>
+
+                                    <button class="btn btn-primary btn-sm mt-2">
+                                        Randevu Talebi Oluştur
+                                    </button>
+                                </form>
                             </div>
                         }
                     </div>
                 }
             }
-
-            <p class="text-muted mt-3 mb-0">
-                Henüz randevu oluşturulmadı.
-            </p>
         </div>
     }
 </section>

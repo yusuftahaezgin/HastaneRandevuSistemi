@@ -1,0 +1,176 @@
+@model List<Randevu>
+@using System.Globalization
+@using HastaneRandevuSistemi.Services
+
+@{
+    var admin = User.IsInRole("Yonetici");
+
+    ViewData["Title"] = admin
+        ? "Randevu Onayları"
+        : "Randevularım";
+
+    var tr = CultureInfo.GetCultureInfo("tr-TR");
+}
+
+<div class="py-5">
+    <h2>@ViewData["Title"]</h2>
+
+    @if (admin)
+    {
+        <a asp-controller="Admin"
+           asp-action="UcretVeHizmetler"
+           class="btn btn-outline-primary mb-3">
+            Ücret ve Hizmet Yönetimi
+        </a>
+    }
+    else
+    {
+        <a asp-controller="Randevu"
+           asp-action="Olustur"
+           class="btn btn-primary mb-3">
+            Doktor Randevusu Al
+        </a>
+
+        <a asp-controller="Randevu"
+           asp-action="Hizmet"
+           class="btn btn-outline-primary mb-3">
+            Hizmet Randevusu Al
+        </a>
+    }
+
+    @if (TempData["Hata"] is string hata)
+    {
+        <div class="alert alert-danger">@hata</div>
+    }
+
+    @if (TempData["Basari"] is string basari)
+    {
+        <div class="alert alert-success">@basari</div>
+    }
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Tarih / Saat</th>
+                    <th>Hastane / Çalışan</th>
+                    <th>İşlem / Süre</th>
+                    <th>Ücret</th>
+
+                    @if (admin)
+                    {
+                        <th>Hasta</th>
+                    }
+
+                    <th>Durum</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td>
+                            @r.Tarih.ToString("dd.MM.yyyy")
+                            <br />
+                            @r.Baslangic.ToString("HH:mm")
+                            –
+                            @r.Bitis.ToString("HH:mm")
+                        </td>
+
+                        <td>
+                            @r.HastaneAdi
+                            <br />
+                            @r.PoliklinikAdi
+                            <br />
+                            @r.CalisanAdi
+                        </td>
+
+                        <td>
+                            @r.IslemAdi
+                            <br />
+                            @r.SureDakika dakika
+                        </td>
+
+                        <td>@r.Ucret.ToString("N2", tr) TL</td>
+
+                        @if (admin)
+                        {
+                            <td>@r.Hasta.Ad @r.Hasta.Soyad</td>
+                        }
+
+                        <td>
+                            @RandevuKayitService.DurumMetni(r.Durum)
+                        </td>
+
+                        <td>
+                            @if (
+                                r.Tarih.ToDateTime(r.Baslangic)
+                                    > RandevuKayitService.Simdi
+                                && (
+                                    r.Durum == RandevuDurumu.OnayBekliyor
+                                    || r.Durum == RandevuDurumu.Onaylandi
+                                ))
+                            {
+                                @if (admin)
+                                {
+                                    <form asp-controller="Admin"
+                                          asp-action="RandevuKarar"
+                                          method="post"
+                                          class="d-flex gap-1">
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@r.Id" />
+
+                                        @if (r.Durum == RandevuDurumu.OnayBekliyor)
+                                        {
+                                            <button name="karar"
+                                                    value="onay"
+                                                    class="btn btn-success btn-sm">
+                                                Onayla
+                                            </button>
+
+                                            <button name="karar"
+                                                    value="ret"
+                                                    class="btn btn-danger btn-sm">
+                                                Reddet
+                                            </button>
+                                        }
+
+                                        <button name="karar"
+                                                value="iptal"
+                                                class="btn btn-outline-danger btn-sm">
+                                            İptal Et
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-controller="Randevu"
+                                          asp-action="Iptal"
+                                          method="post">
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@r.Id" />
+
+                                        <button class="btn btn-outline-danger btn-sm">
+                                            İptal Et
+                                        </button>
+                                    </form>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <p>Gösterilecek randevu bulunmuyor.</p>
+    }
+</div>
